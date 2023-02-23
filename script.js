@@ -1,6 +1,7 @@
 const canvas = document.querySelector("canvas");
 const ctx = canvas.getContext("2d");
 
+const ALL_CARDS = [];
 let beginStacks = [];
 let rows = [];
 let STACK = [];
@@ -19,6 +20,8 @@ const _ROWS = 7;
 
 const CARDS_IMAGES = [];
 
+let stackCardsRevealed = 0;
+
 class Card {
     static WIDTH = 110;
     static HEIGHT = Card.WIDTH * (11/7);
@@ -35,6 +38,9 @@ class Card {
         this.colorType = color;
         this.number = number;
 
+        this.x = null;
+        this.y = null;
+
         this.displayedNumber = this.number + 1;
         if(this.number == 0) this.displayedNumber = "A";
         if(this.number == 10) this.displayedNumber = "J";
@@ -46,6 +52,9 @@ class Card {
         this.revealed = false;
     }
     render(x, y) {
+        this.x = x;
+        this.y = y;
+
         if(this.revealed) this.#renderHeads(x, y);
         else this.#renderTails(x, y);
     }
@@ -121,6 +130,15 @@ function init() {
     CARDS_IMAGES[TYPE_CARO] = loadImage("images/karo.png");
     CARDS_IMAGES[TYPE_TREFLE] = loadImage("images/trefle.png");
 
+    canvas.onmousedown = function(event) {
+        const LEFT_MOUSE_BUTTON = 0;
+        if(event.button == LEFT_MOUSE_BUTTON) {
+            const x = event.clientX - canvas.offsetLeft;
+            const y = event.clientY - canvas.offsetTop;
+            mouseClick(x, y);
+        }
+    }
+
     initGame();
     update();
 }
@@ -130,7 +148,10 @@ function initGame() {
     for(let i = 0; i < _CARDS_COLORS; i++) {
         beginStacks[i] = [];
         for(let j = 0; j < _CARDS_TYPES; j++) {
-            beginStacks[i].push(new Card(i, j));
+            const card = new Card(i, j);
+
+            ALL_CARDS.push(card);
+            beginStacks[i].push(card);
         }
     }
 
@@ -180,6 +201,14 @@ function render() {
     const STACK_Y = SHELF_CORRECT; 
     renderShelf(STACK_X1, STACK_Y);
 
+    for(let i = 0; i < STACK.length; i++) {
+        if(i < stackCardsRevealed) {
+            STACK[i].render(STACK_X2, STACK_Y);
+        } else {
+            STACK[i].render(STACK_X1, STACK_Y);
+        }
+    }
+
     // Render Cards Rows
     const ROWS_Y = 250;
     for(let i = 0; i < _ROWS; i++) {
@@ -190,6 +219,34 @@ function render() {
             rows[i][j].render(ROWS_X, ROWS_Y + j * (Card.SUB_IMAGE_SIZE + Card.SUB_IMAGE_CORRECT * 2));
         }
     }
+}
+
+function mouseClick(x, y) {
+    for(let i = 0; i < STACK.length; i++) {
+        const card = STACK[i];
+
+        if(cardContain(x, y, card)) {
+            stackCardsRevealed++;
+            if(stackCardsRevealed >= STACK.length) {
+                stackCardsRevealed = 0;
+                
+                for(let card of STACK) {
+                    card.hide();
+                }
+            }
+            card.reveal();
+            break;
+        }
+    }
+}
+
+function findCard(x, y, array) {
+    return array.find(function(elem) {
+        return elem.revealed && cardContain(x, y, elem);
+    });
+}
+function cardContain(x, y, card) {
+    return (x >= card.x && x < card.x + Card.WIDTH && y >= card.y && y < card.y + Card.HEIGHT);
 }
 
 function renderShelf(x, y) {
