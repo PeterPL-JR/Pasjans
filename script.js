@@ -33,6 +33,7 @@ class Card {
 
     static COLOR = "white";
     static BORDER_COLOR = "gray";
+    static MOVING_SPEED = 5;
 
     constructor(color, number) {
         this.colorType = color;
@@ -57,6 +58,12 @@ class Card {
 
         if(this.revealed) this.#renderHeads(x, y);
         else this.#renderTails(x, y);
+    }
+    moveTo(x, y) {
+        const angle = Math.atan2(y - this.y, x - this.x);
+        
+        const xSpeed = Math.cos(angle);
+        const ySpeed = Math.sin(angle);
     }
 
     #renderHeads(x, y) {
@@ -186,6 +193,11 @@ function update() {
 const GRADIENT_COLOR_1 = "green";
 const GRADIENT_COLOR_2 = "#195610";
 
+const STACK_X1 = WIDTH - Card.WIDTH - SHELF_CORRECT;
+const STACK_X2 = WIDTH - Card.WIDTH * 2 - SHELF_CORRECT - SHELF_CORRECT;
+    
+const STACK_Y = SHELF_CORRECT; 
+
 function render() {
     renderGradient(0, 0, WIDTH, HEIGHT, HEIGHT, [GRADIENT_COLOR_1, GRADIENT_COLOR_2]);
 
@@ -195,10 +207,6 @@ function render() {
     }
 
     // Render Stack
-    const STACK_X1 = WIDTH - Card.WIDTH - SHELF_CORRECT;
-    const STACK_X2 = WIDTH - Card.WIDTH * 2 - SHELF_CORRECT - SHELF_CORRECT;
-    
-    const STACK_Y = SHELF_CORRECT; 
     renderShelf(STACK_X1, STACK_Y);
 
     for(let i = 0; i < STACK.length; i++) {
@@ -222,21 +230,27 @@ function render() {
 }
 
 function mouseClick(x, y) {
-    for(let i = 0; i < STACK.length; i++) {
-        const card = STACK[i];
-
-        if(cardContain(x, y, card)) {
-            stackCardsRevealed++;
-            if(stackCardsRevealed >= STACK.length) {
-                stackCardsRevealed = 0;
-                
-                for(let card of STACK) {
-                    card.hide();
-                }
-            }
-            card.reveal();
-            break;
+    if(contain(x, y, STACK_X1, STACK_Y, Card.WIDTH, Card.HEIGHT)) {
+        if(stackCardsRevealed >= STACK.length) {
+            resetStack();
+            return;
         }
+        clickStack();
+    }
+}
+
+function clickStack() {
+    STACK[stackCardsRevealed].moveTo(STACK_X2, STACK_Y);
+
+    stackCardsRevealed++;
+    for(let i = 0; i < stackCardsRevealed; i++) {
+        STACK[i].reveal();
+    }
+}
+function resetStack() {
+    stackCardsRevealed = 0;
+    for(let card of STACK) {
+        card.hide();
     }
 }
 
@@ -246,7 +260,10 @@ function findCard(x, y, array) {
     });
 }
 function cardContain(x, y, card) {
-    return (x >= card.x && x < card.x + Card.WIDTH && y >= card.y && y < card.y + Card.HEIGHT);
+    return contain(x, y, card.x, card.y, Card.WIDTH, Card.HEIGHT);
+}
+function contain(pointX, pointY, x, y, width, height) {
+    return pointX >= x && pointX < x + width && pointY >= y && pointY < y + height;
 }
 
 function renderShelf(x, y) {
