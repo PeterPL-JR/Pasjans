@@ -18,109 +18,19 @@ const _CARDS_COLORS = 4;
 const _CARDS_TYPES = 13;
 const _ROWS = 7;
 
+const _AS = 0;
 const CARDS_IMAGES = [];
 
 let stackCardsRevealed = 0;
 
-class Card {
-    static WIDTH = 110;
-    static HEIGHT = Card.WIDTH * (11/7);
-    
-    static IMAGE_SIZE = Card.WIDTH * 0.8;
-    static SUB_IMAGE_SIZE = Card.WIDTH * 0.3;
-    static BORDER_RADIUS = 7;
-    static SUB_IMAGE_CORRECT = 6;
+let mouseX, mouseY;
+let mouseMoving = false;
+let mouseClicked = false;
+let beginMousePos = null;
 
-    static COLOR = "white";
-    static BORDER_COLOR = "gray";
-    static MOVING_SPEED = 5;
-
-    constructor(color, number) {
-        this.colorType = color;
-        this.number = number;
-
-        this.x = null;
-        this.y = null;
-
-        this.displayedNumber = this.number + 1;
-        if(this.number == 0) this.displayedNumber = "A";
-        if(this.number == 10) this.displayedNumber = "J";
-        if(this.number == 11) this.displayedNumber = "Q";
-        if(this.number == 12) this.displayedNumber = "K";
-
-        this.color = (color == TYPE_HERT || color == TYPE_CARO) ? COLOR_RED : COLOR_BLACK;
-        this.image = CARDS_IMAGES[color];
-        this.revealed = false;
-    }
-    render(x, y) {
-        this.x = x;
-        this.y = y;
-
-        if(this.revealed) this.#renderHeads(x, y);
-        else this.#renderTails(x, y);
-    }
-    moveTo(x, y) {
-        const angle = Math.atan2(y - this.y, x - this.x);
-        
-        const xSpeed = Math.cos(angle);
-        const ySpeed = Math.sin(angle);
-    }
-
-    #renderHeads(x, y) {
-        renderRoundRect(x, y, Card.WIDTH, Card.HEIGHT, Card.BORDER_RADIUS, Card.COLOR, Card.BORDER_COLOR);
-
-        // Render Card Image
-        const IMAGE_X = x + Card.WIDTH / 2 - Card.IMAGE_SIZE / 2;
-        const IMAGE_Y = y + Card.HEIGHT - Card.IMAGE_SIZE - 30;
-        ctx.drawImage(this.image, IMAGE_X, IMAGE_Y, Card.IMAGE_SIZE, Card.IMAGE_SIZE);
-
-        // Render Card Sub Image
-        const SUB_IMAGE_X = x + Card.WIDTH - Card.SUB_IMAGE_SIZE - Card.SUB_IMAGE_CORRECT;
-        const SUB_IMAGE_Y = y + Card.SUB_IMAGE_CORRECT;
-        ctx.drawImage(this.image, SUB_IMAGE_X, SUB_IMAGE_Y, Card.SUB_IMAGE_SIZE, Card.SUB_IMAGE_SIZE);
-    
-        // Render Number
-        ctx.fillStyle = this.color;
-        ctx.font = `bold ${Card.SUB_IMAGE_SIZE}px Verdana`;
-
-        const TEXT_X = x + 7;
-        const TEXT_Y = y + Card.SUB_IMAGE_SIZE;
-        ctx.fillText(this.displayedNumber, TEXT_X, TEXT_Y);
-    }
-    #renderTails(x, y) {
-        const TAILS_COLOR_1 = "#4163cb";
-        const TAILS_COLOR_2 = "#224098";
-
-        const TAILS_BORDER_COLOR = "white";
-        const TAILS_BORDER_SIZE = 8;
-        renderRoundRect(x, y, Card.WIDTH, Card.HEIGHT, Card.BORDER_RADIUS, TAILS_BORDER_COLOR, Card.BORDER_COLOR);
-        
-        const TAILS_BACK_X = x + TAILS_BORDER_SIZE;
-        const TAILS_BACK_Y = y + TAILS_BORDER_SIZE;
-
-        const TAILS_BACK_WIDTH = Card.WIDTH - TAILS_BORDER_SIZE * 2;
-        const TAILS_BACK_HEIGHT = Card.HEIGHT - TAILS_BORDER_SIZE * 2;
-        renderRoundGradient(TAILS_BACK_X, TAILS_BACK_Y, TAILS_BACK_WIDTH, TAILS_BACK_HEIGHT, Card.BORDER_RADIUS, Card.WIDTH, [TAILS_COLOR_1, TAILS_COLOR_2]);
-    
-        const INNER_BORDER_COLOR = "#6fa3f2";
-        const INNER_BORDER_SIZE = 5;
-        const INNER_RECT_CORRECT = 10;
-        
-        const INNER_RECT_X = TAILS_BACK_X + INNER_RECT_CORRECT;
-        const INNER_RECT_Y = TAILS_BACK_Y + INNER_RECT_CORRECT;
-
-        const INNER_RECT_WIDTH = TAILS_BACK_WIDTH - INNER_RECT_CORRECT * 2;
-        const INNER_RECT_HEIGHT = TAILS_BACK_HEIGHT - INNER_RECT_CORRECT * 2;
-        renderRoundRect(INNER_RECT_X, INNER_RECT_Y, INNER_RECT_WIDTH, INNER_RECT_HEIGHT, TAILS_BORDER_SIZE / 2, "#0000", INNER_BORDER_COLOR, INNER_BORDER_SIZE);
-    }
-
-    reveal() {
-        this.revealed = true;
-    }
-    hide() {
-        this.revealed = false;
-    }
-}
+let movedCard = null;
+let movedCardOldPos = null;
+let movedCardOffset = null;
 
 const SHELF_CORRECT = 30;
 const SHELF_SPACE = 20;
@@ -137,13 +47,30 @@ function init() {
     CARDS_IMAGES[TYPE_CARO] = loadImage("images/karo.png");
     CARDS_IMAGES[TYPE_TREFLE] = loadImage("images/trefle.png");
 
-    canvas.onmousedown = function(event) {
+    canvas.onclick = function(event) {        
         const LEFT_MOUSE_BUTTON = 0;
-        if(event.button == LEFT_MOUSE_BUTTON) {
-            const x = event.clientX - canvas.offsetLeft;
-            const y = event.clientY - canvas.offsetTop;
+        if (event.button == LEFT_MOUSE_BUTTON) {
+            const x = getMousePos(event).x;
+            const y = getMousePos(event).y;
             mouseClick(x, y);
         }
+    }
+    canvas.onmousedown = function (event) {
+        mouseClicked = true;
+        beginMousePos = getMousePos(event);
+        mouseStartMoving();
+    }
+    canvas.onmouseup = function() {
+        mouseStopMoving();
+    }
+
+    canvas.onmousemove = function(event) {
+        mouseX = getMousePos(event).x;
+        mouseY = getMousePos(event).y;
+        mouseMoving = true;
+    }
+    canvas.onmouseout = function() {
+        mouseStopMoving();
     }
 
     initGame();
@@ -152,9 +79,9 @@ function init() {
 
 function initGame() {
     // Create ordered stacks
-    for(let i = 0; i < _CARDS_COLORS; i++) {
+    for (let i = 0; i < _CARDS_COLORS; i++) {
         beginStacks[i] = [];
-        for(let j = 0; j < _CARDS_TYPES; j++) {
+        for (let j = 0; j < _CARDS_TYPES; j++) {
             const card = new Card(i, j);
 
             ALL_CARDS.push(card);
@@ -162,13 +89,13 @@ function initGame() {
         }
     }
 
-    for(let i = 0; i < _ROWS; i++) {
+    for (let i = 0; i < _ROWS; i++) {
         rows[i] = [];
-        for(let j = 0; j <= i; j++) {
+        for (let j = 0; j <= i; j++) {
             let randomIndex = null;
             do {
                 randomIndex = getRandom(0, _CARDS_COLORS - 1);
-            } while(beginStacks[randomIndex].length == 0);
+            } while (beginStacks[randomIndex].length == 0);
 
             const randomCard = getRandomElement(beginStacks[randomIndex]);
             rows[i].push(randomCard);
@@ -176,18 +103,36 @@ function initGame() {
         rows[i][rows[i].length - 1].reveal();
     }
 
-    for(let i = 0; i < _CARDS_COLORS; i++) {
+    for (let i = 0; i < _CARDS_COLORS; i++) {
         const length = beginStacks[i].length;
-        for(let j = 0; j < length; j++) {
+        for (let j = 0; j < length; j++) {
             STACK.push(beginStacks[i].pop());
         }
     }
     STACK = shuffleArray(STACK);
+
+    initBeginPositions();
+}
+
+function initBeginPositions() {
+    for (let i = 0; i < _ROWS; i++) {
+        for (let j = 0; j < rows[i].length; j++) {
+            rows[i][j].setPosition(getRowX(i), getRowY() + j * (Card.SUB_IMAGE_SIZE + Card.SUB_IMAGE_CORRECT * 2));
+        }
+    }
+    for(let i = 0; i < STACK.length; i++) {
+        STACK[i].setPosition(STACK_X1, STACK_Y);
+    }
 }
 
 function update() {
     requestAnimationFrame(update);
     render();
+
+    if(movedCard && !movedCard.moving && mouseMoving && mouseClicked) {
+        moveCard();
+    }
+    mouseMoving = false;
 }
 
 const GRADIENT_COLOR_1 = "green";
@@ -195,67 +140,195 @@ const GRADIENT_COLOR_2 = "#195610";
 
 const STACK_X1 = WIDTH - Card.WIDTH - SHELF_CORRECT;
 const STACK_X2 = WIDTH - Card.WIDTH * 2 - SHELF_CORRECT - SHELF_CORRECT;
-    
-const STACK_Y = SHELF_CORRECT; 
+
+const STACK_Y = SHELF_CORRECT;
 
 function render() {
     renderGradient(0, 0, WIDTH, HEIGHT, HEIGHT, [GRADIENT_COLOR_1, GRADIENT_COLOR_2]);
 
     // Render Begin Stacks
-    for(let i = 0; i < _CARDS_COLORS; i++) {
-        renderShelf(SHELF_CORRECT + i * (Card.WIDTH + SHELF_SPACE), SHELF_CORRECT);
+    for (let i = 0; i < _CARDS_COLORS; i++) {
+        renderShelf(getBeginShelfPos(i).x, getBeginShelfPos(i).y);
+        for(let j = 0; j < beginStacks[i].length; j++) {
+            beginStacks[i][j].render();
+        }
     }
 
     // Render Stack
     renderShelf(STACK_X1, STACK_Y);
 
-    for(let i = 0; i < STACK.length; i++) {
-        if(i < stackCardsRevealed) {
-            STACK[i].render(STACK_X2, STACK_Y);
-        } else {
-            STACK[i].render(STACK_X1, STACK_Y);
-        }
+    for (let i = STACK.length - 1; i >= stackCardsRevealed; i--) {
+        tryRenderCard(STACK[i]);
+    }
+    for(let i = 0; i < stackCardsRevealed; i++) {
+        tryRenderCard(STACK[i]);
     }
 
     // Render Cards Rows
-    const ROWS_Y = 250;
-    for(let i = 0; i < _ROWS; i++) {
-        const ROWS_X = SHELF_CORRECT + i * (Card.WIDTH + SHELF_SPACE);
-
-        renderShelf(ROWS_X, ROWS_Y);
-        for(let j = 0; j < rows[i].length; j++) {
-            rows[i][j].render(ROWS_X, ROWS_Y + j * (Card.SUB_IMAGE_SIZE + Card.SUB_IMAGE_CORRECT * 2));
+    for(let i = 0; i < rows.length; i++) {
+        renderShelf(getRowX(i), getRowY());
+        
+        const row = rows[i];
+        for(let card of row) {
+            tryRenderCard(card);
         }
+    }
+
+    // Render Moved Card
+    if(movedCard != null) {
+        movedCard.render();
     }
 }
 
+function checkCardAction(card) {
+    const cardArea = Card.WIDTH * Card.HEIGHT;
+
+    // Check begin/end stacks
+    let stackIndex = -1;
+    let mostInsersection = -1;
+
+    for(let i = 0; i < beginStacks.length; i++) {
+        const stackX = getBeginShelfPos(i).x;
+        const stackY = getBeginShelfPos(i).y;
+        
+        const cardRect = {x:card.x, y:card.y, width:Card.WIDTH, height:Card.HEIGHT};
+        const shelfRect = {x:stackX, y:stackY, width:Card.WIDTH, height:Card.HEIGHT};
+
+        const intersection = countRectsIntersection(cardRect, shelfRect);
+        if(intersection > 0 && intersection > mostInsersection && (intersection/cardArea) > 0.6) {
+            mostInsersection = intersection;
+            stackIndex = i;
+        }
+    }
+    if(stackIndex != -1) {
+        const targetStack = beginStacks[stackIndex];
+        if(targetStack.length == 0 && card.number == _AS) {
+            moveCardArray(card, targetStack, getBeginShelfPos(stackIndex));
+            return true;
+        }
+    }
+    return false;
+}
+
 function mouseClick(x, y) {
-    if(contain(x, y, STACK_X1, STACK_Y, Card.WIDTH, Card.HEIGHT)) {
-        if(stackCardsRevealed >= STACK.length) {
+    if (contain(x, y, STACK_X1, STACK_Y, Card.WIDTH, Card.HEIGHT)) {
+        if (stackCardsRevealed >= STACK.length) {
             resetStack();
             return;
         }
         clickStack();
     }
 }
+function moveCard() {
+    movedCard.setPosition(mouseX - movedCardOffset.x, mouseY - movedCardOffset.y);
+}
+
+function moveCardArray(card, target, newPosition) {
+    let indexInSource;
+    
+    // Check STACK
+    indexInSource = STACK.indexOf(card)
+    if(indexInSource != -1) {
+        STACK.splice(indexInSource, 1);
+        
+        stackCardsRevealed--;
+        if(stackCardsRevealed < 0) {
+            stackCardsRevealed = 0;
+        }
+    }
+    
+    card.setPosition(newPosition.x, newPosition.y);
+    addCardToArray(card, target);
+}
+function addCardToArray(card, array) {
+    array.push(card);
+}
+
+function mouseStartMoving() {
+    if(movedCard != null) return;
+    
+    for(let beginStack of beginStacks) {
+        for(let card of beginStack) {
+            if(tryMoveCard(card)) return;
+        }
+    }
+    for(let row of rows) {
+        for(let card of row) {
+            if(tryMoveCard(card)) return;
+        }
+    }
+    for(let i = STACK.length - 1; i >= 0; i--) {
+        if(tryMoveCard(STACK[i])) return;
+    }
+}
+function mouseStopMoving() {
+    mouseMoving = false;
+    mouseClicked = false;
+    beginMousePos = null;
+
+    if(movedCard != null) {
+        if(!checkCardAction(movedCard)) {
+            movedCard.moveTo(movedCardOldPos.x, movedCardOldPos.y, CARD_SPEED_ROW, function() {
+                resetMovedCardData();
+            });
+        } else {            
+            resetMovedCardData();
+        }
+    }
+}
+
+function resetMovedCardData() {
+    movedCard = null;
+    movedCardOldPos = null;
+    movedCardOffset = null;
+}
+
+function startCartMoving(card) {
+    movedCardOffset = {
+        x: beginMousePos.x - card.x,
+        y: beginMousePos.y - card.y
+    }
+    movedCard = card;
+    movedCardOldPos = {x:card.x, y:card.y};
+}
+function tryRenderCard(card) {
+    if(card != movedCard) {
+        card.render();
+    }
+}
+function tryMoveCard(card) {
+    if(card.revealed && !card.moving && cardContain(beginMousePos.x, beginMousePos.y, card)) {
+        startCartMoving(card);
+        return true;
+    }
+    return false;
+}
 
 function clickStack() {
-    STACK[stackCardsRevealed].moveTo(STACK_X2, STACK_Y);
+    if(movedCard != null) return;
+    STACK[stackCardsRevealed].moveTo(STACK_X2, STACK_Y, CARD_SPEED_STACK);
 
     stackCardsRevealed++;
-    for(let i = 0; i < stackCardsRevealed; i++) {
+    for (let i = 0; i < stackCardsRevealed; i++) {
         STACK[i].reveal();
     }
 }
 function resetStack() {
     stackCardsRevealed = 0;
-    for(let card of STACK) {
+    for (let card of STACK) {
         card.hide();
+        card.setPosition(STACK_X1, STACK_Y);
     }
 }
 
+function getMousePos(event) {
+    return {
+        x: event.clientX - canvas.offsetLeft,
+        y: event.clientY - canvas.offsetTop
+    };
+}
 function findCard(x, y, array) {
-    return array.find(function(elem) {
+    return array.find(function (elem) {
         return elem.revealed && cardContain(x, y, elem);
     });
 }
@@ -266,71 +339,13 @@ function contain(pointX, pointY, x, y, width, height) {
     return pointX >= x && pointX < x + width && pointY >= y && pointY < y + height;
 }
 
-function renderShelf(x, y) {
-    renderRoundGradient(x, y, Card.WIDTH, Card.HEIGHT, Card.BORDER_RADIUS, Card.HEIGHT, ["#0000", "#0008"]);
+function getBeginShelfPos(index) {
+    return {x: SHELF_CORRECT + index * (Card.WIDTH + SHELF_SPACE), y: SHELF_CORRECT};
 }
 
-function renderRoundRect(x, y, width, height, roundRate, color, borderColor=color, lineWidth=1) {
-    ctx.fillStyle = color;
-    ctx.strokeStyle = borderColor;
-    ctx.lineWidth = lineWidth;
-
-    ctx.beginPath();
-    ctx.roundRect(x, y, width, height, roundRate);
-    ctx.fill();
-    ctx.stroke();
-    ctx.closePath();
+function getRowX(rowIndex) {
+    return SHELF_CORRECT + rowIndex * (Card.WIDTH + SHELF_SPACE);
 }
-
-function renderGradient(x, y, width, height, radius, colors) {
-    const gradient = getGradient(x, y, width, height, radius, colors);
-    ctx.fillStyle = gradient;
-    ctx.fillRect(x, y, width, height);
-}
-function renderRoundGradient(x, y, width, height, roundRate, radius, colors) {
-    const gradient = getGradient(x, y, width, height, radius, colors);
-
-    ctx.fillStyle = gradient;
-    ctx.beginPath();
-    ctx.roundRect(x, y, width, height, roundRate);
-    ctx.fill();
-    ctx.closePath();
-}
-
-function getGradient(x, y, width, height, radius, colors) {
-    const GRADIENT_X = x + width / 2;
-    const GRADIENT_Y = y + height / 2;
-
-    const gradient = ctx.createRadialGradient(GRADIENT_X, GRADIENT_Y, 0, GRADIENT_X, GRADIENT_Y, radius);
-    for(let i = 0; i < colors.length; i++) {
-        gradient.addColorStop(i, colors[i]);
-    }
-    return gradient;
-}
-function loadImage(path) {
-    const img = document.createElement("img");
-    img.src = path;
-    return img;
-}
-
-function shuffleArray(array) {
-    const bufferArray = Array.from(array);
-    const newArray = [];
-
-    while(bufferArray.length != 0) {
-        const randomIndex = getRandom(0, bufferArray.length - 1);
-        newArray.push(bufferArray.splice(randomIndex, 1)[0]);
-    }
-    return newArray;
-}
-
-function getRandomElement(array) {
-    if(array.length == 0) return null;
-
-    const randomIndex = getRandom(0, array.length - 1);
-    return array.splice(randomIndex, 1)[0];
-}
-
-function getRandom(min, max) {
-    return Math.floor(Math.random() * (max - min + 1)) + min;
+function getRowY() {
+    return 250;
 }
