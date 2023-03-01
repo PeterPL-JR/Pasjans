@@ -30,11 +30,11 @@ function countRectsIntersection(rectangle1, rectangle2) {
         return 0;
     }
 
-    const point1 = {x:x5, y:y5};
-    const point2 = {x:x6, y:y6};
+    const point1 = { x: x5, y: y5 };
+    const point2 = { x: x6, y: y6 };
 
-    const point3 = {x:x5, y:y6};
-    const point4 = {x:x6, y:y5};
+    const point3 = { x: x5, y: y6 };
+    const point4 = { x: x6, y: y5 };
 
     const obj = [point1, point2, point3, point4];
     return (obj[0].x - obj[1].x) * (obj[0].y - obj[1].y);
@@ -49,4 +49,11 @@ function getRandomElement(array) {
 
 function getRandom(min, max) {
     return Math.floor(Math.random() * (max - min + 1)) + min;
+}
+
+function toRadians(deg) {
+    return deg * Math.PI / 180;
+}
+function toDegrees(rad) {
+    return rad * 180 / Math.PI;
 }

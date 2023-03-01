@@ -1,5 +1,6 @@
 const CARD_SPEED_STACK = 20;
 const CARD_SPEED_ROW = 50;
+const CARD_SPEED_SPINNING = 1;
 
 class Card {
     static WIDTH = 110;
@@ -30,11 +31,15 @@ class Card {
         this.image = CARDS_IMAGES[color];
         this.revealed = false;
         this.moving = false;
+
+        this.renderingWidth = Card.WIDTH;
+        this.spinningAngle = 0;
+        this.spinning = false;
     }
     update() {
-        if(this.distance >= this.maxDistance) {
+        if (this.distance >= this.maxDistance) {
             this.setPosition(this.targetX, this.targetY);
-            if(this.endEvent && this.endEvent != null) {
+            if (this.endEvent && this.endEvent != null) {
                 this.endEvent();
             }
 
@@ -42,7 +47,7 @@ class Card {
             this.endEvent = undefined;
             this.moving = false;
         }
-        if(this.xSpeed != undefined && this.ySpeed != undefined && this.maxDistance != undefined) {
+        if (this.xSpeed != undefined && this.ySpeed != undefined && this.maxDistance != undefined) {
             this.x += this.xSpeed;
             this.y += this.ySpeed;
 
@@ -51,10 +56,22 @@ class Card {
 
             this.distance += Math.sqrt(Math.pow(this.xSpeed, 2) + Math.pow(this.ySpeed, 2));
         }
+        if (this.spinning) {
+            this.spinningAngle += CARD_SPEED_SPINNING;
+
+            if (this.spinningAngle >= 90) {
+                this.spinningAngle = 0;
+                this.spinning = false;
+            }
+        }
     }
     render() {
         this.update();
-        if(this.x == null || this.y == null) return;
+        if (this.x == null || this.y == null) return;
+        if (this.spinning) {
+            const radians = toRadians(this.spinningAngle);
+            const sin = Math.sin(radians);
+        }
 
         if (this.revealed) this.#renderHeads(this.x, this.y);
         else this.#renderTails(this.x, this.y);
@@ -63,7 +80,7 @@ class Card {
         this.x = x;
         this.y = y;
     }
-    moveTo(x, y, speed, endEvent=null) {
+    moveTo(x, y, speed, endEvent = null) {
         const xDist = x - this.x;
         const yDist = y - this.y;
         const angle = Math.atan2(yDist, xDist);
@@ -128,8 +145,11 @@ class Card {
         renderRoundRect(INNER_RECT_X, INNER_RECT_Y, INNER_RECT_WIDTH, INNER_RECT_HEIGHT, TAILS_BORDER_SIZE / 2, "#0000", INNER_BORDER_COLOR, INNER_BORDER_SIZE);
     }
 
-    reveal() {
+    reveal(animation = false) {
         this.revealed = true;
+        if (animation) {
+            this.spinning = true;
+        }
     }
     hide() {
         this.revealed = false;
