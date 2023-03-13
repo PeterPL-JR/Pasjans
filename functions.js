@@ -40,6 +40,24 @@ function countRectsIntersection(rectangle1, rectangle2) {
     return (obj[0].x - obj[1].x) * (obj[0].y - obj[1].y);
 }
 
+function getMousePos(event) {
+    return {
+        x: event.clientX - canvas.offsetLeft,
+        y: event.clientY - canvas.offsetTop
+    };
+}
+function findCard(x, y, array) {
+    return array.find(function (elem) {
+        return elem.revealed && cardContain(x, y, elem);
+    });
+}
+function cardContain(x, y, card) {
+    return contain(x, y, card.x, card.y, Card.WIDTH, Card.HEIGHT);
+}
+function contain(pointX, pointY, x, y, width, height) {
+    return pointX >= x && pointX < x + width && pointY >= y && pointY < y + height;
+}
+
 function getRandomElement(array) {
     if (array.length == 0) return null;
 

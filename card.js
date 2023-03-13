@@ -66,16 +66,20 @@ class Card {
         }
     }
     render() {
+        this.renderOnPosition(this.x, this.y);
+    }
+    renderOnPosition(x, y) {
         this.update();
-        if (this.x == null || this.y == null) return;
+        if (x == null || y == null) return;
         if (this.spinning) {
             const radians = toRadians(this.spinningAngle);
             const sin = Math.sin(radians);
         }
 
-        if (this.revealed) this.#renderHeads(this.x, this.y);
-        else this.#renderTails(this.x, this.y);
+        if (this.revealed) this.#renderHeads(x, y);
+        else this.#renderTails(x, y);
     }
+
     setPosition(x, y) {
         this.x = x;
         this.y = y;
@@ -133,7 +137,7 @@ class Card {
         const TAILS_BACK_HEIGHT = Card.HEIGHT - TAILS_BORDER_SIZE * 2;
         renderRoundGradient(TAILS_BACK_X, TAILS_BACK_Y, TAILS_BACK_WIDTH, TAILS_BACK_HEIGHT, Card.BORDER_RADIUS, Card.WIDTH, [TAILS_COLOR_1, TAILS_COLOR_2]);
 
-        const INNER_BORDER_COLOR = "#6fa3f2";
+        const INNER_BORDER_COLOR = "#5589d9";
         const INNER_BORDER_SIZE = 5;
         const INNER_RECT_CORRECT = 10;
 
@@ -147,11 +151,17 @@ class Card {
 
     reveal(animation = false) {
         this.revealed = true;
+        this.setActive(true);
         if (animation) {
             this.spinning = true;
         }
     }
     hide() {
         this.revealed = false;
+        this.setActive(false);
+    }
+
+    setActive(active) {
+        this.active = active;
     }
 }

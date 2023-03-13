@@ -68,6 +68,7 @@ function init() {
         mouseX = getMousePos(event).x;
         mouseY = getMousePos(event).y;
         mouseMoving = true;
+        updateMouseMoving(event);
     }
     canvas.onmouseout = function () {
         mouseStopMoving();
@@ -178,6 +179,18 @@ function render() {
     if (movedCard != null) {
         movedCard.render();
     }
+
+    // Render stack cards amount
+    const unrevealedCards = STACK.length - stackCardsRevealed;
+    if(unrevealedCards > 0) {
+        const STACK_STR_OFFSET = Card.BORDER_RADIUS + 7;
+        const STACK_STR_X = STACK_X1 + STACK_STR_OFFSET;
+        const STACK_STR_Y = STACK_Y + Card.HEIGHT - STACK_STR_OFFSET;
+
+        ctx.font = "bold 30px 'Verdana'";
+        ctx.fillStyle = "white";
+        ctx.fillText(unrevealedCards, STACK_STR_X, STACK_STR_Y);
+    }
 }
 
 function checkCardAction(card) {
@@ -207,10 +220,15 @@ function checkCardAction(card) {
             return true;
         } else {
             const lastCard = targetStack[targetStack.length - 1];
-
+            if(lastCard && lastCard.colorType == card.colorType && lastCard.number == card.number - 1) {
+                moveCardArray(card, targetStack, getBeginShelfPos(stackIndex));
+                for(let i = 0; i < targetStack.length - 1; i++) {
+                    targetStack[i].setActive(false);
+                }
+                return true;
+            }
         }
     }
-
     return false;
 }
 
@@ -239,12 +257,21 @@ function moveCardArray(card, target, newPosition) {
         if (stackCardsRevealed < 0) {
             stackCardsRevealed = 0;
         }
+        const lastCard = STACK[indexInSource - 1];
+        console.log(lastCard);
+        if(lastCard) {
+            lastCard.setActive(true);
+        }
     }
     // Check begin stack
     for (let i = 0; i < _CARDS_COLORS; i++) {
         indexInSource = beginStacks[i].indexOf(card);
         if (indexInSource != -1) {
             beginStacks[i].splice(indexInSource, 1);
+            const lastCard = beginStacks[i][indexInSource - 1];
+            if(lastCard) {
+                lastCard.setActive(true);
+            }
         }
     }
     // Check rows
@@ -315,13 +342,24 @@ function startCartMoving(card) {
     movedCard = card;
     movedCardOldPos = { x: card.x, y: card.y };
 }
+
+function updateMouseMoving(event) {
+    const mousePos = getMousePos(event);
+    const card = findCard(mousePos.x, mousePos.y, ALL_CARDS);
+    setCanvasCursor(card ? "pointer" : "default");
+
+    if(contain(mousePos.x, mousePos.y, STACK_X1, STACK_Y, Card.WIDTH, Card.HEIGHT)) {
+        setCanvasCursor("pointer");
+    }
+}
+
 function tryRenderCard(card) {
     if (card != movedCard) {
         card.render();
     }
 }
 function tryMoveCard(card) {
-    if (card.revealed && !card.moving && cardContain(beginMousePos.x, beginMousePos.y, card)) {
+    if (card.active && card.revealed && !card.moving && cardContain(beginMousePos.x, beginMousePos.y, card)) {
         startCartMoving(card);
         return true;
     }
@@ -335,6 +373,9 @@ function clickStack() {
     stackCardsRevealed++;
     for (let i = 0; i < stackCardsRevealed; i++) {
         STACK[i].reveal(false);
+        if(i < stackCardsRevealed - 1) {
+            STACK[i].setActive(false);
+        }
     }
 }
 function resetStack() {
@@ -343,24 +384,6 @@ function resetStack() {
         card.hide();
         card.setPosition(STACK_X1, STACK_Y);
     }
-}
-
-function getMousePos(event) {
-    return {
-        x: event.clientX - canvas.offsetLeft,
-        y: event.clientY - canvas.offsetTop
-    };
-}
-function findCard(x, y, array) {
-    return array.find(function (elem) {
-        return elem.revealed && cardContain(x, y, elem);
-    });
-}
-function cardContain(x, y, card) {
-    return contain(x, y, card.x, card.y, Card.WIDTH, Card.HEIGHT);
-}
-function contain(pointX, pointY, x, y, width, height) {
-    return pointX >= x && pointX < x + width && pointY >= y && pointY < y + height;
 }
 
 function getBeginShelfPos(index) {
@@ -372,4 +395,8 @@ function getRowX(rowIndex) {
 }
 function getRowY() {
     return 250;
+}
+
+function setCanvasCursor(cursorType) {
+    canvas.style.setProperty("cursor", cursorType);
 }
