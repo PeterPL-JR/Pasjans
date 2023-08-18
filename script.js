@@ -258,7 +258,6 @@ function moveCardArray(card, target, newPosition) {
             stackCardsRevealed = 0;
         }
         const lastCard = STACK[indexInSource - 1];
-        console.log(lastCard);
         if(lastCard) {
             lastCard.setActive(true);
         }

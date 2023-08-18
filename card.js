@@ -1,6 +1,9 @@
 const CARD_SPEED_STACK = 20;
 const CARD_SPEED_ROW = 50;
-const CARD_SPEED_SPINNING = 1;
+const CARD_SPEED_SPINNING = 18;
+
+const MIN_SPIN_ANGLE = 0;
+const MAX_SPIN_ANGLE = 180;
 
 class Card {
     static WIDTH = 110;
@@ -31,51 +34,46 @@ class Card {
         this.image = CARDS_IMAGES[color];
         this.revealed = false;
         this.moving = false;
+        
+        this.spinning = false;
+        this.spinningAngle = MIN_SPIN_ANGLE;
 
         this.renderingWidth = Card.WIDTH;
-        this.spinningAngle = 0;
-        this.spinning = false;
     }
     update() {
-        if (this.distance >= this.maxDistance) {
+        if(this.moving) {
+            this.x += this.xSpeed;
+            this.y += this.ySpeed;
+        }
+        if(this.spinning) {
+            this.#updateSpinning();
+        }
+
+        let xCond = this.xSpeed > 0 ? (this.x >= this.targetX) : (this.x <= this.targetX);
+        let yCond = this.ySpeed > 0 ? (this.y >= this.targetY) : (this.y <= this.targetY);
+        
+        if(xCond && yCond) {
             this.setPosition(this.targetX, this.targetY);
+            
             if (this.endEvent && this.endEvent != null) {
                 this.endEvent();
             }
-
-            this.targetX = this.targetY = this.xSpeed = this.ySpeed = this.maxDistance = undefined;
-            this.endEvent = undefined;
+            
             this.moving = false;
-        }
-        if (this.xSpeed != undefined && this.ySpeed != undefined && this.maxDistance != undefined) {
-            this.x += this.xSpeed;
-            this.y += this.ySpeed;
-
-            this.x = Math.round(this.x);
-            this.y = Math.round(this.y);
-
-            this.distance += Math.sqrt(Math.pow(this.xSpeed, 2) + Math.pow(this.ySpeed, 2));
-        }
-        if (this.spinning) {
-            this.spinningAngle += CARD_SPEED_SPINNING;
-
-            if (this.spinningAngle >= 90) {
-                this.spinningAngle = 0;
-                this.spinning = false;
-            }
+            this.endEvent = null;
+            this.xSpeed = this.ySpeed = this.targetX = this.targetY = undefined;
         }
     }
     render() {
-        this.renderOnPosition(this.x, this.y);
-    }
-    renderOnPosition(x, y) {
         this.update();
-        if (x == null || y == null) return;
-        if (this.spinning) {
-            const radians = toRadians(this.spinningAngle);
-            const sin = Math.sin(radians);
-        }
 
+        if(this.spinning) {
+            this.#renderSpinning();
+        } else {
+            this.#renderOnPosition(this.x, this.y);
+        }
+    }
+    #renderOnPosition(x, y) {        
         if (this.revealed) this.#renderHeads(x, y);
         else this.#renderTails(x, y);
     }
@@ -95,31 +93,57 @@ class Card {
         this.targetX = x;
         this.targetY = y;
 
-        this.maxDistance = Math.sqrt(Math.pow(xDist, 2) + Math.pow(yDist, 2));
-        this.distance = 0;
         this.endEvent = endEvent;
         this.moving = true;
     }
 
+    #updateSpinning() {
+        this.spinningAngle += CARD_SPEED_SPINNING;
+
+        if(this.spinningAngle >= MAX_SPIN_ANGLE / 2) {
+            this.revealed = true;
+        }
+        if(this.spinningAngle >= MAX_SPIN_ANGLE) {
+            this.spinning = false;
+            this.spinningAngle = MIN_SPIN_ANGLE;
+        }
+    }
+    #renderSpinning() {
+        let cos = -Math.cos(toRadians(this.spinningAngle));
+        ctx.save();
+
+        let xOffset = this.x + (Card.WIDTH - Card.WIDTH * cos) / 2;
+        let yOffset = this.y;
+
+        ctx.translate(xOffset, yOffset);
+        ctx.scale(cos, 1);
+        this.#renderOnPosition(0, 0);
+
+        ctx.restore();
+    }
+
     #renderHeads(x, y) {
-        renderRoundRect(x, y, Card.WIDTH, Card.HEIGHT, Card.BORDER_RADIUS, Card.COLOR, Card.BORDER_COLOR);
+        let xOffset = x;
+        let yOffset = y;
+
+        renderRoundRect(xOffset, yOffset, Card.WIDTH, Card.HEIGHT, Card.BORDER_RADIUS, Card.COLOR, Card.BORDER_COLOR);
 
         // Render Card Image
-        const IMAGE_X = x + Card.WIDTH / 2 - Card.IMAGE_SIZE / 2;
-        const IMAGE_Y = y + Card.HEIGHT - Card.IMAGE_SIZE - 30;
+        const IMAGE_X = xOffset + Card.WIDTH / 2 - Card.IMAGE_SIZE / 2;
+        const IMAGE_Y = yOffset + Card.HEIGHT - Card.IMAGE_SIZE - 30;
         ctx.drawImage(this.image, IMAGE_X, IMAGE_Y, Card.IMAGE_SIZE, Card.IMAGE_SIZE);
 
         // Render Card Sub Image
-        const SUB_IMAGE_X = x + Card.WIDTH - Card.SUB_IMAGE_SIZE - Card.SUB_IMAGE_CORRECT;
-        const SUB_IMAGE_Y = y + Card.SUB_IMAGE_CORRECT;
+        const SUB_IMAGE_X = xOffset + Card.WIDTH - Card.SUB_IMAGE_SIZE - Card.SUB_IMAGE_CORRECT;
+        const SUB_IMAGE_Y = yOffset + Card.SUB_IMAGE_CORRECT;
         ctx.drawImage(this.image, SUB_IMAGE_X, SUB_IMAGE_Y, Card.SUB_IMAGE_SIZE, Card.SUB_IMAGE_SIZE);
 
         // Render Number
         ctx.fillStyle = this.color;
         ctx.font = `bold ${Card.SUB_IMAGE_SIZE}px Verdana`;
 
-        const TEXT_X = x + 7;
-        const TEXT_Y = y + Card.SUB_IMAGE_SIZE;
+        const TEXT_X = xOffset + 7;
+        const TEXT_Y = yOffset + Card.SUB_IMAGE_SIZE;
         ctx.fillText(this.displayedNumber, TEXT_X, TEXT_Y);
     }
     #renderTails(x, y) {
@@ -150,11 +174,12 @@ class Card {
     }
 
     reveal(animation = false) {
-        this.revealed = true;
-        this.setActive(true);
-        if (animation) {
+        if(animation) {
             this.spinning = true;
+        } else {
+            this.revealed = true;
         }
+        this.setActive(true);
     }
     hide() {
         this.revealed = false;
