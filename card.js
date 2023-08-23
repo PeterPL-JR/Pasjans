@@ -31,6 +31,8 @@ class Card {
         if (this.number == 12) this.displayedNumber = "K";
 
         this.color = (color == TYPE_HERT || color == TYPE_CARO) ? COLOR_RED : COLOR_BLACK;
+        this.colorIndex = (color == TYPE_HERT || color == TYPE_CARO) ? COLOR_TYPE_RED : COLOR_TYPE_BLACK;
+
         this.image = CARDS_IMAGES[color];
         this.revealed = false;
         this.moving = false;
@@ -49,19 +51,11 @@ class Card {
             this.#updateSpinning();
         }
 
-        let xCond = this.xSpeed > 0 ? (this.x >= this.targetX) : (this.x <= this.targetX);
-        let yCond = this.ySpeed > 0 ? (this.y >= this.targetY) : (this.y <= this.targetY);
+        let endMoveCondX = this.xSpeed > 0 ? (this.x >= this.targetX) : (this.x <= this.targetX);
+        let endMoveCondY = this.ySpeed > 0 ? (this.y >= this.targetY) : (this.y <= this.targetY);
         
-        if(xCond && yCond) {
-            this.setPosition(this.targetX, this.targetY);
-            
-            if (this.endEvent && this.endEvent != null) {
-                this.endEvent();
-            }
-            
-            this.moving = false;
-            this.endEvent = null;
-            this.xSpeed = this.ySpeed = this.targetX = this.targetY = undefined;
+        if(endMoveCondX && endMoveCondY) {
+            this.#stopMoving();
         }
     }
     render() {
@@ -95,6 +89,18 @@ class Card {
 
         this.endEvent = endEvent;
         this.moving = true;
+    }
+
+    #stopMoving() {
+        this.setPosition(this.targetX, this.targetY);
+            
+        if (this.endEvent && this.endEvent != null) {
+            this.endEvent();
+        }
+        
+        this.moving = false;
+        this.endEvent = null;
+        this.xSpeed = this.ySpeed = this.targetX = this.targetY = undefined;
     }
 
     #updateSpinning() {

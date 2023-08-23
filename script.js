@@ -11,16 +11,20 @@ const TYPE_PIQUE = 1;
 const TYPE_CARO = 2;
 const TYPE_TREFLE = 3;
 
-const COLOR_RED = "#dd1a1e";
+const COLOR_TYPE_BLACK = 0;
+const COLOR_TYPE_RED = 1;
+
 const COLOR_BLACK = "black";
+const COLOR_RED = "#dd1a1e";
 
 const _CARDS_COLORS = 4;
 const _CARDS_TYPES = 13;
 const _ROWS = 7;
 
 const _AS = 0;
-const CARDS_IMAGES = [];
+const _KING = 12;
 
+const CARDS_IMAGES = [];
 let stackCardsRevealed = 0;
 
 let mouseX, mouseY;
@@ -89,7 +93,22 @@ function initGame() {
             beginStacks[i].push(card);
         }
     }
+    createRows();
+    createStack();
 
+    initBeginPositions();
+}
+
+function createStack() {
+    for (let i = 0; i < _CARDS_COLORS; i++) {
+        const length = beginStacks[i].length;
+        for (let j = 0; j < length; j++) {
+            STACK.push(beginStacks[i].pop());
+        }
+    }
+    STACK = shuffleArray(STACK);
+}
+function createRows() {
     for (let i = 0; i < _ROWS; i++) {
         rows[i] = [];
         for (let j = 0; j <= i; j++) {
@@ -103,22 +122,12 @@ function initGame() {
         }
         rows[i][rows[i].length - 1].reveal(false);
     }
-
-    for (let i = 0; i < _CARDS_COLORS; i++) {
-        const length = beginStacks[i].length;
-        for (let j = 0; j < length; j++) {
-            STACK.push(beginStacks[i].pop());
-        }
-    }
-    STACK = shuffleArray(STACK);
-
-    initBeginPositions();
 }
 
 function initBeginPositions() {
     for (let i = 0; i < _ROWS; i++) {
         for (let j = 0; j < rows[i].length; j++) {
-            rows[i][j].setPosition(getRowX(i), getRowY() + j * (Card.SUB_IMAGE_SIZE + Card.SUB_IMAGE_CORRECT * 2));
+            rows[i][j].setPosition(getRowCardPos(i, j).x, getRowCardPos(i, j).y);
         }
     }
     for (let i = 0; i < STACK.length; i++) {
@@ -181,7 +190,7 @@ function renderStack() {
 }
 function renderRows() {
     for (let i = 0; i < rows.length; i++) {
-        renderShelf(getRowX(i), getRowY());
+        renderShelf(getRowPos(i).x, getRowPos(i).y);
 
         const row = rows[i];
         for (let card of row) {
@@ -321,12 +330,12 @@ function resetStack() {
 function getBeginShelfPos(index) {
     return { x: SHELF_CORRECT + index * (Card.WIDTH + SHELF_SPACE), y: SHELF_CORRECT };
 }
-
-function getRowX(rowIndex) {
-    return SHELF_CORRECT + rowIndex * (Card.WIDTH + SHELF_SPACE);
+function getRowPos(index) {
+    return { x: SHELF_CORRECT + index * (Card.WIDTH + SHELF_SPACE), y: 250};
 }
-function getRowY() {
-    return 250;
+
+function getRowCardPos(rowIndex, cardIndex) {
+    return {x: getRowPos(rowIndex).x, y: getRowPos(rowIndex).y + cardIndex * (Card.SUB_IMAGE_SIZE + Card.SUB_IMAGE_CORRECT * 2)};
 }
 
 function setCanvasCursor(cursorType) {

@@ -39,9 +39,12 @@ function countRectsIntersection(rectangle1, rectangle2) {
     const obj = [point1, point2, point3, point4];
     return (obj[0].x - obj[1].x) * (obj[0].y - obj[1].y);
 }
-
-function isIntersectionEnough(cardRect, shelfRect) {
+function isIntersectionEnough(card, shelfPosition) {
     const CARD_SHELF_INTERSECTION_RATE = 0.6;
+
+    const cardRect = { x: card.x, y: card.y, width: Card.WIDTH, height: Card.HEIGHT };
+    const shelfRect = { x: shelfPosition.x, y: shelfPosition.y, width: Card.WIDTH, height: Card.HEIGHT };
+
     const cardArea = Card.WIDTH * Card.HEIGHT;
     let intersection = countRectsIntersection(cardRect, shelfRect);
 

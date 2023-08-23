@@ -1,25 +1,46 @@
 // Check move to
 function tryMoveToRows(card) {
+    for(let i = 0; i < rows.length; i++) {
+        let lastCard = rows[i][rows[i].length - 1];
+        if(card == lastCard) continue;
+
+        let targetPosition = lastCard ? {x: lastCard.x, y: lastCard.y} : getRowPos(i);
+
+        if(isIntersectionEnough(card, targetPosition)) {
+            let target = rows[i];
+            let positionTarget = getRowCardPos(i, rows[i].length);
+
+            if(lastCard) {
+                if(lastCard.number == card.number + 1 && lastCard.colorIndex != card.colorIndex) {
+                    moveCardArray(card, target, positionTarget);
+                    lastCard.setActive(false);
+                    return true;
+                }
+            } else {
+                if(card.number == _KING) {
+                    moveCardArray(card, target, positionTarget);
+                    return true;
+                }
+            }
+        }
+    }
+    return false;
 }
 function tryMoveToBeginStack(card) {
     for (let i = 0; i < beginStacks.length; i++) {
-        const stackX = getBeginShelfPos(i).x;
-        const stackY = getBeginShelfPos(i).y;
+        const shelfPosition = getBeginShelfPos(i);
 
-        const cardRect = { x: card.x, y: card.y, width: Card.WIDTH, height: Card.HEIGHT };
-        const shelfRect = { x: stackX, y: stackY, width: Card.WIDTH, height: Card.HEIGHT };
-
-        if(isIntersectionEnough(cardRect, shelfRect)) {
+        if(isIntersectionEnough(card, shelfPosition)) {
             const targetStack = beginStacks[i];
             if (targetStack.length == 0 && card.number == _AS) {
-                moveCardArray(card, targetStack, getBeginShelfPos(i));
+                moveCardArray(card, targetStack, shelfPosition);
                 return true;
             } else {
                 const lastCard = targetStack[targetStack.length - 1];
                 if(lastCard && lastCard.colorType == card.colorType && lastCard.number == card.number - 1) {
-                    moveCardArray(card, targetStack, getBeginShelfPos(i));
-                    for(let i = 0; i < targetStack.length - 1; i++) {
-                        targetStack[i].setActive(false);
+                    moveCardArray(card, targetStack, shelfPosition);
+                    for(let j = 0; j < targetStack.length - 1; j++) {
+                        targetStack[j].setActive(false);
                     }
                     return true;
                 }
@@ -47,29 +68,28 @@ function tryMoveFromStack(card) {
     }
 }
 function tryMoveFromRows(card) {
-    let indexInSource;
-
-    for (let i = 0; i < _ROWS; i++) {
-        indexInSource = rows[i].indexOf(card);
+    for (let row of rows) {
+        let indexInSource = row.indexOf(card);
         if (indexInSource != -1) {
-            const row = rows[i];
             row.splice(indexInSource, 1);
 
             const lastCard = row[row.length - 1];
             if (lastCard) {
-                lastCard.reveal(true);
+                if(!lastCard.revealed) {
+                    lastCard.reveal(true);
+                } else {
+                    lastCard.setActive(true);
+                }
             }
         }
     }
 }
 function tryMoveFromBeginStack(card) {
-    let indexInSource;
-
-    for (let i = 0; i < _CARDS_COLORS; i++) {
-        indexInSource = beginStacks[i].indexOf(card);
+    for (let bStack of beginStacks) {
+        let indexInSource = bStack.indexOf(card);
         if (indexInSource != -1) {
-            beginStacks[i].splice(indexInSource, 1);
-            const lastCard = beginStacks[i][indexInSource - 1];
+            bStack.splice(indexInSource, 1);
+            const lastCard = bStack[indexInSource - 1];
             if(lastCard) {
                 lastCard.setActive(true);
             }
