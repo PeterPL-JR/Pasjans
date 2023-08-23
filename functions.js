@@ -40,6 +40,14 @@ function countRectsIntersection(rectangle1, rectangle2) {
     return (obj[0].x - obj[1].x) * (obj[0].y - obj[1].y);
 }
 
+function isIntersectionEnough(cardRect, shelfRect) {
+    const CARD_SHELF_INTERSECTION_RATE = 0.6;
+    const cardArea = Card.WIDTH * Card.HEIGHT;
+    let intersection = countRectsIntersection(cardRect, shelfRect);
+
+    return intersection > 0 && (intersection / cardArea) > CARD_SHELF_INTERSECTION_RATE;
+}
+
 function getMousePos(event) {
     return {
         x: event.clientX - canvas.offsetLeft,

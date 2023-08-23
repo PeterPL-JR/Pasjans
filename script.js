@@ -147,33 +147,9 @@ const STACK_Y = SHELF_CORRECT;
 function render() {
     renderGradient(0, 0, WIDTH, HEIGHT, HEIGHT, [GRADIENT_COLOR_1, GRADIENT_COLOR_2]);
 
-    // Render Begin Stacks
-    for (let i = 0; i < _CARDS_COLORS; i++) {
-        renderShelf(getBeginShelfPos(i).x, getBeginShelfPos(i).y);
-        for (let j = 0; j < beginStacks[i].length; j++) {
-            beginStacks[i][j].render();
-        }
-    }
-
-    // Render Stack
-    renderShelf(STACK_X1, STACK_Y);
-
-    for (let i = STACK.length - 1; i >= stackCardsRevealed; i--) {
-        tryRenderCard(STACK[i]);
-    }
-    for (let i = 0; i < stackCardsRevealed; i++) {
-        tryRenderCard(STACK[i]);
-    }
-
-    // Render Cards Rows
-    for (let i = 0; i < rows.length; i++) {
-        renderShelf(getRowX(i), getRowY());
-
-        const row = rows[i];
-        for (let card of row) {
-            tryRenderCard(card);
-        }
-    }
+    renderStack();
+    renderRows();
+    renderBeginStacks();
 
     // Render Moved Card
     if (movedCard != null) {
@@ -193,43 +169,37 @@ function render() {
     }
 }
 
+function renderStack() {
+    renderShelf(STACK_X1, STACK_Y);
+
+    for (let i = STACK.length - 1; i >= stackCardsRevealed; i--) {
+        tryRenderCard(STACK[i]);
+    }
+    for (let i = 0; i < stackCardsRevealed; i++) {
+        tryRenderCard(STACK[i]);
+    }
+}
+function renderRows() {
+    for (let i = 0; i < rows.length; i++) {
+        renderShelf(getRowX(i), getRowY());
+
+        const row = rows[i];
+        for (let card of row) {
+            tryRenderCard(card);
+        }
+    }
+}
+function renderBeginStacks() {
+    for (let i = 0; i < _CARDS_COLORS; i++) {
+        renderShelf(getBeginShelfPos(i).x, getBeginShelfPos(i).y);
+        for (let j = 0; j < beginStacks[i].length; j++) {
+            beginStacks[i][j].render();
+        }
+    }
+}
+
 function checkCardAction(card) {
-    const cardArea = Card.WIDTH * Card.HEIGHT;
-
-    // Check begin/end stacks
-    let stackIndex = -1;
-    let mostInsersection = -1;
-
-    for (let i = 0; i < beginStacks.length; i++) {
-        const stackX = getBeginShelfPos(i).x;
-        const stackY = getBeginShelfPos(i).y;
-
-        const cardRect = { x: card.x, y: card.y, width: Card.WIDTH, height: Card.HEIGHT };
-        const shelfRect = { x: stackX, y: stackY, width: Card.WIDTH, height: Card.HEIGHT };
-
-        const intersection = countRectsIntersection(cardRect, shelfRect);
-        if (intersection > 0 && intersection > mostInsersection && (intersection / cardArea) > 0.6) {
-            mostInsersection = intersection;
-            stackIndex = i;
-        }
-    }
-    if (stackIndex != -1) {
-        const targetStack = beginStacks[stackIndex];
-        if (targetStack.length == 0 && card.number == _AS) {
-            moveCardArray(card, targetStack, getBeginShelfPos(stackIndex));
-            return true;
-        } else {
-            const lastCard = targetStack[targetStack.length - 1];
-            if(lastCard && lastCard.colorType == card.colorType && lastCard.number == card.number - 1) {
-                moveCardArray(card, targetStack, getBeginShelfPos(stackIndex));
-                for(let i = 0; i < targetStack.length - 1; i++) {
-                    targetStack[i].setActive(false);
-                }
-                return true;
-            }
-        }
-    }
-    return false;
+    return tryMoveToBeginStack(card) || tryMoveToRows(card);
 }
 
 function mouseClick(x, y) {
@@ -246,46 +216,9 @@ function moveCard() {
 }
 
 function moveCardArray(card, target, newPosition) {
-    let indexInSource;
-
-    // Check STACK
-    indexInSource = STACK.indexOf(card)
-    if (indexInSource != -1) {
-        STACK.splice(indexInSource, 1);
-
-        stackCardsRevealed--;
-        if (stackCardsRevealed < 0) {
-            stackCardsRevealed = 0;
-        }
-        const lastCard = STACK[indexInSource - 1];
-        if(lastCard) {
-            lastCard.setActive(true);
-        }
-    }
-    // Check begin stack
-    for (let i = 0; i < _CARDS_COLORS; i++) {
-        indexInSource = beginStacks[i].indexOf(card);
-        if (indexInSource != -1) {
-            beginStacks[i].splice(indexInSource, 1);
-            const lastCard = beginStacks[i][indexInSource - 1];
-            if(lastCard) {
-                lastCard.setActive(true);
-            }
-        }
-    }
-    // Check rows
-    for (let i = 0; i < _ROWS; i++) {
-        indexInSource = rows[i].indexOf(card);
-        if (indexInSource != -1) {
-            const row = rows[i];
-            row.splice(indexInSource, 1);
-
-            const lastCard = row[row.length - 1];
-            if (lastCard) {
-                lastCard.reveal(true);
-            }
-        }
-    }
+    tryMoveFromStack(card);
+    tryMoveFromRows(card);
+    tryMoveFromBeginStack(card);
 
     card.setPosition(newPosition.x, newPosition.y);
     addCardToArray(card, target);
