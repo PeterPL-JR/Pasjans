@@ -36,6 +36,7 @@ class Card {
         this.image = CARDS_IMAGES[color];
         this.revealed = false;
         this.moving = false;
+        this.cardNext = null;
         
         this.spinning = false;
         this.spinningAngle = MIN_SPIN_ANGLE;
@@ -44,8 +45,10 @@ class Card {
     }
     update() {
         if(this.moving) {
-            this.x += this.xSpeed;
-            this.y += this.ySpeed;
+            let newX = this.x + this.xSpeed;
+            let newY = this.y + this.ySpeed;
+
+            this.setPosition(newX, newY);
         }
         if(this.spinning) {
             this.#updateSpinning();
@@ -75,6 +78,13 @@ class Card {
     setPosition(x, y) {
         this.x = x;
         this.y = y;
+        
+        if(this.cardNext) {
+            let cardX = this.x;
+            let cardY = this.y + getRowCardY(1);
+            
+            this.cardNext.setPosition(cardX, cardY);
+        }
     }
     moveTo(x, y, speed, endEvent = null) {
         const xDist = x - this.x;

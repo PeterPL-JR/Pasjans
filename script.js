@@ -232,6 +232,10 @@ function moveCardArray(card, target, newPosition) {
     card.setPosition(newPosition.x, newPosition.y);
     addCardToArray(card, target);
 }
+function moveCardArrayToRow(card, target, newPosition) {
+    moveCardArray(card, target, newPosition);
+}
+
 function addCardToArray(card, array) {
     array.push(card);
 }
@@ -245,8 +249,9 @@ function mouseStartMoving() {
         }
     }
     for (let row of rows) {
-        for (let card of row) {
-            if (tryMoveCard(card)) return;
+        for(let i = row.length - 1; i >= 0; i--) {
+            let card = row[i];
+            if (tryMoveRowCard(row, card)) return;
         }
     }
     for (let i = STACK.length - 1; i >= 0; i--) {
@@ -300,11 +305,25 @@ function tryRenderCard(card) {
     }
 }
 function tryMoveCard(card) {
-    if (card.active && card.revealed && !card.moving && cardContain(beginMousePos.x, beginMousePos.y, card)) {
+    if (card.active && isCardMoveable(card)) {
         startCartMoving(card);
         return true;
     }
     return false;
+}
+function tryMoveRowCard(row, card) {
+    if(isCardMoveable(card)) {
+        let cardNext = row[findCardIndex(card, row) + 1];
+        if(cardNext) {
+            card.cardNext = cardNext;
+        }
+        startCartMoving(card);
+        return true;
+    }
+    return false;
+}
+function isCardMoveable(card) {
+    return card.revealed && !card.moving && cardContain(beginMousePos.x, beginMousePos.y, card);
 }
 
 function clickStack() {
@@ -335,7 +354,10 @@ function getRowPos(index) {
 }
 
 function getRowCardPos(rowIndex, cardIndex) {
-    return {x: getRowPos(rowIndex).x, y: getRowPos(rowIndex).y + cardIndex * (Card.SUB_IMAGE_SIZE + Card.SUB_IMAGE_CORRECT * 2)};
+    return {x: getRowPos(rowIndex).x, y: getRowPos(rowIndex).y + getRowCardY(cardIndex)};
+}
+function getRowCardY(cardIndex) {
+    return cardIndex * (Card.SUB_IMAGE_SIZE + Card.SUB_IMAGE_CORRECT * 2);
 }
 
 function setCanvasCursor(cursorType) {

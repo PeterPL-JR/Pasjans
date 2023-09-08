@@ -62,6 +62,12 @@ function findCard(x, y, array) {
         return elem.revealed && cardContain(x, y, elem);
     });
 }
+function findCardIndex(card, array) {
+    return array.findIndex(function (elem) {
+        return elem == card;
+    });
+}
+
 function cardContain(x, y, card) {
     return contain(x, y, card.x, card.y, Card.WIDTH, Card.HEIGHT);
 }

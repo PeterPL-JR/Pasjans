@@ -12,13 +12,13 @@ function tryMoveToRows(card) {
 
             if(lastCard) {
                 if(lastCard.number == card.number + 1 && lastCard.colorIndex != card.colorIndex) {
-                    moveCardArray(card, target, positionTarget);
+                    moveCardArrayToRow(card, target, positionTarget)
                     lastCard.setActive(false);
                     return true;
                 }
             } else {
                 if(card.number == _KING) {
-                    moveCardArray(card, target, positionTarget);
+                    moveCardArrayToRow(card, target, positionTarget);
                     return true;
                 }
             }
@@ -32,12 +32,12 @@ function tryMoveToBeginStack(card) {
 
         if(isIntersectionEnough(card, shelfPosition)) {
             const targetStack = beginStacks[i];
-            if (targetStack.length == 0 && card.number == _AS) {
+            if (targetStack.length == 0 && card.number == _AS && !card.cardNext) {
                 moveCardArray(card, targetStack, shelfPosition);
                 return true;
             } else {
                 const lastCard = targetStack[targetStack.length - 1];
-                if(lastCard && lastCard.colorType == card.colorType && lastCard.number == card.number - 1) {
+                if(lastCard && lastCard.colorType == card.colorType && lastCard.number == card.number - 1 && !card.cardNext) {
                     moveCardArray(card, targetStack, shelfPosition);
                     for(let j = 0; j < targetStack.length - 1; j++) {
                         targetStack[j].setActive(false);
