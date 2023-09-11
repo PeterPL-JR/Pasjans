@@ -125,13 +125,17 @@ function createRows() {
 }
 
 function initBeginPositions() {
+    setRowsCardsPositions();
+    
+    for (let i = 0; i < STACK.length; i++) {
+        STACK[i].setPosition(STACK_X1, STACK_Y);
+    }
+}
+function setRowsCardsPositions() {
     for (let i = 0; i < _ROWS; i++) {
         for (let j = 0; j < rows[i].length; j++) {
             rows[i][j].setPosition(getRowCardPos(i, j).x, getRowCardPos(i, j).y);
         }
-    }
-    for (let i = 0; i < STACK.length; i++) {
-        STACK[i].setPosition(STACK_X1, STACK_Y);
     }
 }
 
@@ -234,6 +238,13 @@ function moveCardArray(card, target, newPosition) {
 }
 function moveCardArrayToRow(card, target, newPosition) {
     moveCardArray(card, target, newPosition);
+    if(card.cardNext) {
+        moveCardArrayToRow(card.cardNext, target, newPosition);
+        return;
+    }
+    card.resetCardNext();
+    
+    setRowsCardsPositions();
 }
 
 function addCardToArray(card, array) {
@@ -275,7 +286,9 @@ function mouseStopMoving() {
 }
 
 function resetMovedCardData() {
+    movedCard.resetCardNext();
     movedCard = null;
+
     movedCardOldPos = null;
     movedCardOffset = null;
 }
@@ -313,14 +326,18 @@ function tryMoveCard(card) {
 }
 function tryMoveRowCard(row, card) {
     if(isCardMoveable(card)) {
-        let cardNext = row[findCardIndex(card, row) + 1];
-        if(cardNext) {
-            card.cardNext = cardNext;
-        }
+        trySetCardNext(row, card);     
         startCartMoving(card);
         return true;
     }
     return false;
+}
+function trySetCardNext(row, card) {
+    let cardNext = row[findCardIndex(card, row) + 1];
+    if(cardNext) {
+        card.setCardNext(cardNext);
+        trySetCardNext(row, cardNext);
+    }
 }
 function isCardMoveable(card) {
     return card.revealed && !card.moving && cardContain(beginMousePos.x, beginMousePos.y, card);
@@ -350,7 +367,7 @@ function getBeginShelfPos(index) {
     return { x: SHELF_CORRECT + index * (Card.WIDTH + SHELF_SPACE), y: SHELF_CORRECT };
 }
 function getRowPos(index) {
-    return { x: SHELF_CORRECT + index * (Card.WIDTH + SHELF_SPACE), y: 250};
+    return { x: SHELF_CORRECT + index * (Card.WIDTH + SHELF_SPACE), y: Card.HEIGHT + SHELF_CORRECT + 30};
 }
 
 function getRowCardPos(rowIndex, cardIndex) {

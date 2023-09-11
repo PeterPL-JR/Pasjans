@@ -6,11 +6,11 @@ const MIN_SPIN_ANGLE = 0;
 const MAX_SPIN_ANGLE = 180;
 
 class Card {
-    static WIDTH = 110;
+    static WIDTH = 90;
     static HEIGHT = Card.WIDTH * (11 / 7);
 
     static IMAGE_SIZE = Card.WIDTH * 0.8;
-    static SUB_IMAGE_SIZE = Card.WIDTH * 0.3;
+    static SUB_IMAGE_SIZE = Card.WIDTH * 0.27;
     static BORDER_RADIUS = 7;
     static SUB_IMAGE_CORRECT = 6;
 
@@ -37,7 +37,7 @@ class Card {
         this.revealed = false;
         this.moving = false;
         this.cardNext = null;
-        
+
         this.spinning = false;
         this.spinningAngle = MIN_SPIN_ANGLE;
 
@@ -63,11 +63,15 @@ class Card {
     }
     render() {
         this.update();
-
+        
         if(this.spinning) {
             this.#renderSpinning();
         } else {
             this.#renderOnPosition(this.x, this.y);
+        }
+
+        if(this.cardNext) {
+            this.cardNext.render();
         }
     }
     #renderOnPosition(x, y) {        
@@ -187,6 +191,16 @@ class Card {
         const INNER_RECT_WIDTH = TAILS_BACK_WIDTH - INNER_RECT_CORRECT * 2;
         const INNER_RECT_HEIGHT = TAILS_BACK_HEIGHT - INNER_RECT_CORRECT * 2;
         renderRoundRect(INNER_RECT_X, INNER_RECT_Y, INNER_RECT_WIDTH, INNER_RECT_HEIGHT, TAILS_BORDER_SIZE / 2, "#0000", INNER_BORDER_COLOR, INNER_BORDER_SIZE);
+    }
+
+    setCardNext(card) {
+        this.cardNext = card;
+    }
+    resetCardNext() {
+        if(this.cardNext) {
+            this.cardNext.resetCardNext();
+        }
+        this.cardNext = null;
     }
 
     reveal(animation = false) {
