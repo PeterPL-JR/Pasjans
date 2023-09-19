@@ -1,5 +1,6 @@
 const canvas = document.querySelector("canvas");
 const ctx = canvas.getContext("2d");
+const menuDiv = document.getElementById("menu");
 
 const ALL_CARDS = [];
 let beginStacks = [];
@@ -24,6 +25,8 @@ const _ROWS = 7;
 const _AS = 0;
 const _KING = 12;
 
+const IMAGES_CARDS_PATH = "images/cards/";
+
 const CARDS_IMAGES = [];
 let stackCardsRevealed = 0;
 
@@ -36,20 +39,23 @@ let movedCard = null;
 let movedCardOldPos = null;
 let movedCardOffset = null;
 
-const SHELF_CORRECT = 30;
+const SHELF_CORRECT_X = 40;
+const SHELF_CORRECT_Y = 75;
 const SHELF_SPACE = 20;
 
-const WIDTH = _ROWS * (Card.WIDTH + SHELF_SPACE) - SHELF_SPACE + SHELF_CORRECT * 2;
-const HEIGHT = 740;
+const WIDTH = _ROWS * (Card.WIDTH + SHELF_SPACE) - SHELF_SPACE + SHELF_CORRECT_X * 2;
+const HEIGHT = 760;
 
 function init() {
     canvas.width = WIDTH;
     canvas.height = HEIGHT;
 
-    CARDS_IMAGES[TYPE_HERT] = loadImage("images/hert.png");
-    CARDS_IMAGES[TYPE_PIQUE] = loadImage("images/pique.png");
-    CARDS_IMAGES[TYPE_CARO] = loadImage("images/karo.png");
-    CARDS_IMAGES[TYPE_TREFLE] = loadImage("images/trefle.png");
+    menuDiv.style.width = WIDTH + 'px';
+
+    CARDS_IMAGES[TYPE_HERT] = loadImage(IMAGES_CARDS_PATH + "hert.png");
+    CARDS_IMAGES[TYPE_PIQUE] = loadImage(IMAGES_CARDS_PATH + "pique.png");
+    CARDS_IMAGES[TYPE_CARO] = loadImage(IMAGES_CARDS_PATH + "karo.png");
+    CARDS_IMAGES[TYPE_TREFLE] = loadImage(IMAGES_CARDS_PATH + "trefle.png");
 
     canvas.onclick = function (event) {
         const LEFT_MOUSE_BUTTON = 0;
@@ -152,10 +158,10 @@ function update() {
 const GRADIENT_COLOR_1 = "green";
 const GRADIENT_COLOR_2 = "#195610";
 
-const STACK_X1 = WIDTH - Card.WIDTH - SHELF_CORRECT;
-const STACK_X2 = WIDTH - Card.WIDTH * 2 - SHELF_CORRECT - SHELF_CORRECT;
+const STACK_X1 = WIDTH - Card.WIDTH - SHELF_CORRECT_X;
+const STACK_X2 = WIDTH - Card.WIDTH * 2 - SHELF_CORRECT_X - SHELF_CORRECT_X;
 
-const STACK_Y = SHELF_CORRECT;
+const STACK_Y = SHELF_CORRECT_Y;
 
 function render() {
     renderGradient(0, 0, WIDTH, HEIGHT, HEIGHT, [GRADIENT_COLOR_1, GRADIENT_COLOR_2]);
@@ -364,10 +370,10 @@ function resetStack() {
 }
 
 function getBeginShelfPos(index) {
-    return { x: SHELF_CORRECT + index * (Card.WIDTH + SHELF_SPACE), y: SHELF_CORRECT };
+    return { x: SHELF_CORRECT_X + index * (Card.WIDTH + SHELF_SPACE), y: SHELF_CORRECT_Y };
 }
 function getRowPos(index) {
-    return { x: SHELF_CORRECT + index * (Card.WIDTH + SHELF_SPACE), y: Card.HEIGHT + SHELF_CORRECT + 30};
+    return { x: SHELF_CORRECT_X + index * (Card.WIDTH + SHELF_SPACE), y: Card.HEIGHT + SHELF_CORRECT_Y + 30};
 }
 
 function getRowCardPos(rowIndex, cardIndex) {
