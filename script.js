@@ -85,6 +85,7 @@ function init() {
     }
 
     initGame();
+    initMenu();
     update();
 }
 
@@ -234,16 +235,19 @@ function moveCard() {
     movedCard.setPosition(mouseX - movedCardOffset.x, mouseY - movedCardOffset.y);
 }
 
-function moveCardArray(card, target, newPosition) {
-    tryMoveFromStack(card);
-    tryMoveFromRows(card);
-    tryMoveFromBeginStack(card);
+const TARGET_BEGIN_STACK = 0;
+const TARGET_ROWS = 1;
 
+function moveCardArray(card, target, newPosition, targetType) {
+    tryMoveFromStack(card, targetType);
+    tryMoveFromRows(card, targetType);
+    tryMoveFromBeginStack(card, targetType);
+    
     card.setPosition(newPosition.x, newPosition.y);
     addCardToArray(card, target);
 }
 function moveCardArrayToRow(card, target, newPosition) {
-    moveCardArray(card, target, newPosition);
+    moveCardArray(card, target, newPosition, TARGET_ROWS);
     if(card.cardNext) {
         moveCardArrayToRow(card.cardNext, target, newPosition);
         return;
@@ -360,6 +364,7 @@ function clickStack() {
             STACK[i].setActive(false);
         }
     }
+    doMove();
 }
 function resetStack() {
     stackCardsRevealed = 0;
@@ -367,6 +372,7 @@ function resetStack() {
         card.hide();
         card.setPosition(STACK_X1, STACK_Y);
     }
+    updateScore(RESET_STACK_POINTS);
 }
 
 function getBeginShelfPos(index) {

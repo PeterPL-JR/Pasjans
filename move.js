@@ -33,12 +33,12 @@ function tryMoveToBeginStack(card) {
         if(isIntersectionEnough(card, shelfPosition)) {
             const targetStack = beginStacks[i];
             if (targetStack.length == 0 && card.number == _AS && !card.cardNext) {
-                moveCardArray(card, targetStack, shelfPosition);
+                moveCardArray(card, targetStack, shelfPosition, TARGET_BEGIN_STACK);
                 return true;
             } else {
                 const lastCard = targetStack[targetStack.length - 1];
                 if(lastCard && lastCard.colorType == card.colorType && lastCard.number == card.number - 1 && !card.cardNext) {
-                    moveCardArray(card, targetStack, shelfPosition);
+                    moveCardArray(card, targetStack, shelfPosition, TARGET_BEGIN_STACK);
                     for(let j = 0; j < targetStack.length - 1; j++) {
                         targetStack[j].setActive(false);
                     }
@@ -51,10 +51,12 @@ function tryMoveToBeginStack(card) {
 }
 
 // Check move from
-function tryMoveFromStack(card) {
+function tryMoveFromStack(card, targetType) {
     let indexInSource = STACK.indexOf(card);
 
     if (indexInSource != -1) {
+        if(targetType == TARGET_ROWS) var points = MOVE_TO_ROWS_POINTS;
+        if(targetType == TARGET_BEGIN_STACK) var points = MOVE_TO_BEGIN_STACK_POINTS;
         STACK.splice(indexInSource, 1);
 
         stackCardsRevealed--;
@@ -65,34 +67,41 @@ function tryMoveFromStack(card) {
         if(lastCard) {
             lastCard.setActive(true);
         }
+        doMove(points);
     }
 }
-function tryMoveFromRows(card) {
+function tryMoveFromRows(card, targetType) {
     for (let row of rows) {
         let indexInSource = row.indexOf(card);
         if (indexInSource != -1) {
+            if(targetType == TARGET_BEGIN_STACK) var points = MOVE_TO_BEGIN_STACK_POINTS;
             row.splice(indexInSource, 1);
 
             const lastCard = row[row.length - 1];
             if (lastCard) {
                 if(!lastCard.revealed) {
                     lastCard.reveal(true);
+                    updateScore(REVEAL_CARD_POINTS);
                 } else {
                     lastCard.setActive(true);
                 }
             }
+            doMove(points);
         }
     }
 }
-function tryMoveFromBeginStack(card) {
+function tryMoveFromBeginStack(card, targetType) {
     for (let bStack of beginStacks) {
         let indexInSource = bStack.indexOf(card);
         if (indexInSource != -1) {
+            if(targetType == TARGET_ROWS) var points = MOVE_AGAIN_TO_ROWS_POINTS;
             bStack.splice(indexInSource, 1);
+            
             const lastCard = bStack[indexInSource - 1];
             if(lastCard) {
                 lastCard.setActive(true);
             }
+            doMove(points);
         }
     }
 }

@@ -75,6 +75,14 @@ function contain(pointX, pointY, x, y, width, height) {
     return pointX >= x && pointX < x + width && pointY >= y && pointY < y + height;
 }
 
+function getTimeString(time) {
+    let minutes = parseInt(time / 60);
+    let seconds = time - minutes * 60;
+
+    seconds = (seconds < 10) ? `0${seconds}` : seconds;
+    return `${minutes}:${seconds}`;
+}
+
 function getRandomElement(array) {
     if (array.length == 0) return null;
 

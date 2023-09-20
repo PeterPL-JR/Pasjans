@@ -36,6 +36,14 @@ canvas, #menu {
     font-weight: normal !important;
     color: #e0e0e0;
 }
+
+#undo-button {
+    position: absolute;
+    top: 0px;
+    right: 0px;
+    cursor: pointer;
+}
+
 img {
     float: left;
     height: 100%;
