@@ -12,7 +12,7 @@ function tryMoveToRows(card) {
 
             if(lastCard) {
                 if(lastCard.number == card.number + 1 && lastCard.colorIndex != card.colorIndex) {
-                    moveCardArrayToRow(card, target, positionTarget)
+                    moveCardArrayToRow(card, target, positionTarget);
                     lastCard.setActive(false);
                     return true;
                 }
@@ -67,7 +67,7 @@ function tryMoveFromStack(card, targetType) {
         if(lastCard) {
             lastCard.setActive(true);
         }
-        doMove(points);
+        doMove(null, points);
     }
 }
 function tryMoveFromRows(card, targetType) {
@@ -80,13 +80,13 @@ function tryMoveFromRows(card, targetType) {
             const lastCard = row[row.length - 1];
             if (lastCard) {
                 if(!lastCard.revealed) {
-                    lastCard.reveal(true);
+                    revealCard(lastCard, true);
                     updateScore(REVEAL_CARD_POINTS);
                 } else {
                     lastCard.setActive(true);
                 }
             }
-            doMove(points);
+            doMove(null, points);
         }
     }
 }
@@ -101,7 +101,7 @@ function tryMoveFromBeginStack(card, targetType) {
             if(lastCard) {
                 lastCard.setActive(true);
             }
-            doMove(points);
+            doMove(null, points);
         }
     }
 }

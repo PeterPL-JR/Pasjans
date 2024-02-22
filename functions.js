@@ -100,3 +100,21 @@ function toRadians(deg) {
 function toDegrees(rad) {
     return rad * 180 / Math.PI;
 }
+
+function getBeginShelfPos(index) {
+    return { x: SHELF_CORRECT_X + index * (Card.WIDTH + SHELF_SPACE), y: SHELF_CORRECT_Y };
+}
+function getRowPos(index) {
+    return { x: SHELF_CORRECT_X + index * (Card.WIDTH + SHELF_SPACE), y: Card.HEIGHT + SHELF_CORRECT_Y + 30};
+}
+
+function getRowCardPos(rowIndex, cardIndex) {
+    return {x: getRowPos(rowIndex).x, y: getRowPos(rowIndex).y + getRowCardY(cardIndex)};
+}
+function getRowCardY(cardIndex) {
+    return cardIndex * (Card.SUB_IMAGE_SIZE + Card.SUB_IMAGE_CORRECT * 2);
+}
+
+function setCanvasCursor(cursorType) {
+    canvas.style.setProperty("cursor", cursorType);
+}

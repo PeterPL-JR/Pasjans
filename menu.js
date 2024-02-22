@@ -4,6 +4,10 @@ const movesMenu = document.querySelector("#moves-div span");
 
 const undoButton = document.getElementById("undo-button");
 
+const MOVE_CLICK_STACK = 0;
+const MOVE_TO_ROWS = 1;
+const MOVE_TO_BEGIN_STACK = 2;
+
 let movesArray = [];
 
 let score = 0;
@@ -11,14 +15,24 @@ let time = 0;
 let moves = 0;
 
 function initMenu() {
-    setInterval(function() {
-        updateTime();
-    }, 1000);
+    startTime();
+
     undoButton.onclick = undo;
+    started = true;
 }
 
 function setMenuValue(menuElem, value) {
     menuElem.innerHTML = value;
+}
+
+function startTime() {
+    timeInterval = setInterval(function() {
+        updateTime();
+    }, 1000);
+}
+
+function stopTime() {
+    clearInterval(timeInterval);
 }
 
 function updateTime() {
@@ -29,7 +43,10 @@ function updateTime() {
     setMenuValue(timeMenu, getTimeString(time));
 }
 
-function doMove(points) {
+function doMove(moveType, points) {
+    let move = {type: moveType};
+    movesArray.push(move);
+
     moves++;
     if(points) {
         updateScore(points);
@@ -53,4 +70,27 @@ function updateScore(points) {
 }
 
 function undo() {
+    if(movesArray.length <= 0) return;
+    moves++;
+    setMenuValue(movesMenu, moves);
+
+    let move = movesArray.pop();
+    if(move.type == MOVE_CLICK_STACK) {
+        undoClickStack();
+    }
+}
+
+function undoClickStack() {
+    if(stackCardsRevealed == 0) {
+        for(let i = 0; i < STACK.length; i++) {
+            revealStackCard(i);
+            STACK[i].reveal(false);
+        }
+        stackCardsRevealed = STACK.length;
+        return;
+    }
+    hideStackCard(stackCardsRevealed - 1, function() {
+        stackCardsRevealed--;
+    });
+    STACK[stackCardsRevealed - 1].hide(false);
 }

@@ -5,6 +5,10 @@ const CARD_SPEED_SPINNING = 18;
 const MIN_SPIN_ANGLE = 0;
 const MAX_SPIN_ANGLE = 180;
 
+const NO_SPIN = 0;
+const SPIN_REVEAL = 1;
+const SPIN_HIDE = 2;
+
 class Card {
     static WIDTH = 90;
     static HEIGHT = Card.WIDTH * (11 / 7);
@@ -38,7 +42,7 @@ class Card {
         this.moving = false;
         this.cardNext = null;
 
-        this.spinning = false;
+        this.spinning = NO_SPIN;
         this.spinningAngle = MIN_SPIN_ANGLE;
 
         this.renderingWidth = Card.WIDTH;
@@ -118,16 +122,38 @@ class Card {
     }
 
     #updateSpinning() {
-        this.spinningAngle += CARD_SPEED_SPINNING;
+        if(this.spinning == SPIN_REVEAL) {
+            this.#updateSpinningReveal();
+        }
+        if(this.spinning == SPIN_HIDE) {
+            this.#updateSpinningHide();
+        }
+    }
 
+    #updateSpinningReveal() {
+        this.spinningAngle += CARD_SPEED_SPINNING;
+            
         if(this.spinningAngle >= MAX_SPIN_ANGLE / 2) {
             this.revealed = true;
         }
         if(this.spinningAngle >= MAX_SPIN_ANGLE) {
-            this.spinning = false;
+            this.spinning = NO_SPIN;
+            this.spinningAngle = MAX_SPIN_ANGLE;
+        }
+    }
+
+    #updateSpinningHide() {
+        this.spinningAngle -= CARD_SPEED_SPINNING;
+
+        if(this.spinningAngle <= MAX_SPIN_ANGLE / 2) {
+            this.revealed = false;
+        }
+        if(this.spinningAngle <= MIN_SPIN_ANGLE) {
+            this.spinning = NO_SPIN;
             this.spinningAngle = MIN_SPIN_ANGLE;
         }
     }
+
     #renderSpinning() {
         let cos = -Math.cos(toRadians(this.spinningAngle));
         ctx.save();
@@ -204,15 +230,25 @@ class Card {
     }
 
     reveal(animation = false) {
+        if(this.revealed) return;
+
         if(animation) {
-            this.spinning = true;
+            this.spinningAngle = MIN_SPIN_ANGLE;
+            this.spinning = SPIN_REVEAL;
         } else {
             this.revealed = true;
         }
         this.setActive(true);
     }
-    hide() {
-        this.revealed = false;
+    hide(animation = false) {
+        if(!this.revealed) return;
+        
+        if(animation) {
+            this.spinningAngle = MAX_SPIN_ANGLE;
+            this.spinning = SPIN_HIDE;
+        } else {
+            this.revealed = false;
+        }
         this.setActive(false);
     }
 

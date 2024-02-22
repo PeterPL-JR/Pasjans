@@ -30,6 +30,8 @@ const IMAGES_CARDS_PATH = "images/cards/";
 const CARDS_IMAGES = [];
 let stackCardsRevealed = 0;
 
+let started = false;
+
 let mouseX, mouseY;
 let mouseMoving = false;
 let mouseClicked = false;
@@ -66,6 +68,9 @@ function init() {
         }
     }
     canvas.onmousedown = function (event) {
+        if(!started) {
+            initMenu();
+        }
         mouseClicked = true;
         beginMousePos = getMousePos(event);
         mouseStartMoving();
@@ -85,7 +90,6 @@ function init() {
     }
 
     initGame();
-    initMenu();
     update();
 }
 
@@ -353,9 +357,14 @@ function isCardMoveable(card) {
     return card.revealed && !card.moving && cardContain(beginMousePos.x, beginMousePos.y, card);
 }
 
+function revealCard(card, animation) {
+    card.reveal(animation);
+    checkVictory();
+}
+
 function clickStack() {
     if (movedCard != null) return;
-    STACK[stackCardsRevealed].moveTo(STACK_X2, STACK_Y, CARD_SPEED_STACK);
+    revealStackCard(stackCardsRevealed);
 
     stackCardsRevealed++;
     for (let i = 0; i < stackCardsRevealed; i++) {
@@ -364,31 +373,38 @@ function clickStack() {
             STACK[i].setActive(false);
         }
     }
-    doMove();
+    doMove(MOVE_CLICK_STACK);
 }
 function resetStack() {
     stackCardsRevealed = 0;
     for (let card of STACK) {
-        card.hide();
+        card.hide(false);
         card.setPosition(STACK_X1, STACK_Y);
     }
     updateScore(RESET_STACK_POINTS);
+    movesArray.push({type: MOVE_CLICK_STACK});
 }
 
-function getBeginShelfPos(index) {
-    return { x: SHELF_CORRECT_X + index * (Card.WIDTH + SHELF_SPACE), y: SHELF_CORRECT_Y };
-}
-function getRowPos(index) {
-    return { x: SHELF_CORRECT_X + index * (Card.WIDTH + SHELF_SPACE), y: Card.HEIGHT + SHELF_CORRECT_Y + 30};
+function revealStackCard(cardIndex, moveEndEvent = null) {
+    STACK[cardIndex].moveTo(STACK_X2, STACK_Y, CARD_SPEED_STACK, moveEndEvent);
 }
 
-function getRowCardPos(rowIndex, cardIndex) {
-    return {x: getRowPos(rowIndex).x, y: getRowPos(rowIndex).y + getRowCardY(cardIndex)};
-}
-function getRowCardY(cardIndex) {
-    return cardIndex * (Card.SUB_IMAGE_SIZE + Card.SUB_IMAGE_CORRECT * 2);
+function hideStackCard(cardIndex, moveEndEvent = null) {
+    STACK[cardIndex].moveTo(STACK_X1, STACK_Y, CARD_SPEED_STACK, moveEndEvent);
 }
 
-function setCanvasCursor(cursorType) {
-    canvas.style.setProperty("cursor", cursorType);
+function checkVictory() {
+    for(let row of rows) {
+        for(let card of row) {
+            if(!card.revealed) {
+                return;
+            }
+        }
+    }
+    victory();
+}
+
+function victory() {
+    stopTime();
+    console.log("Victory!");
 }
