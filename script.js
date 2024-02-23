@@ -239,19 +239,16 @@ function moveCard() {
     movedCard.setPosition(mouseX - movedCardOffset.x, mouseY - movedCardOffset.y);
 }
 
-const TARGET_BEGIN_STACK = 0;
-const TARGET_ROWS = 1;
-
 function moveCardArray(card, target, newPosition, targetType) {
-    tryMoveFromStack(card, targetType);
-    tryMoveFromRows(card, targetType);
-    tryMoveFromBeginStack(card, targetType);
+    tryMoveFromStack(card, target, targetType);
+    tryMoveFromRows(card, target, targetType);
+    tryMoveFromBeginStack(card, target, targetType);
     
     card.setPosition(newPosition.x, newPosition.y);
     addCardToArray(card, target);
 }
 function moveCardArrayToRow(card, target, newPosition) {
-    moveCardArray(card, target, newPosition, TARGET_ROWS);
+    moveCardArray(card, target, newPosition, MOVE_TO_ROWS);
     if(card.cardNext) {
         moveCardArrayToRow(card.cardNext, target, newPosition);
         return;
@@ -359,7 +356,6 @@ function isCardMoveable(card) {
 
 function revealCard(card, animation) {
     card.reveal(animation);
-    checkVictory();
 }
 
 function clickStack() {

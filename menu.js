@@ -8,6 +8,10 @@ const MOVE_CLICK_STACK = 0;
 const MOVE_TO_ROWS = 1;
 const MOVE_TO_BEGIN_STACK = 2;
 
+const MOVE_FROM_STACK = 0;
+const MOVE_FROM_ROWS = 1;
+const MOVE_FROM_BEGIN_STACK = 2;
+
 let movesArray = [];
 
 let score = 0;
@@ -43,8 +47,8 @@ function updateTime() {
     setMenuValue(timeMenu, getTimeString(time));
 }
 
-function doMove(moveType, points) {
-    let move = {type: moveType};
+function doMove(targetType, points, data = {}) {
+    let move = {targetType, ...data};
     movesArray.push(move);
 
     moves++;
@@ -75,8 +79,14 @@ function undo() {
     setMenuValue(movesMenu, moves);
 
     let move = movesArray.pop();
-    if(move.type == MOVE_CLICK_STACK) {
+    if(move.targetType == MOVE_CLICK_STACK) {
         undoClickStack();
+    }
+    if(move.targetType == MOVE_TO_ROWS) {
+        undoMoveToRows(move);
+    }
+    if(move.targetType == MOVE_TO_BEGIN_STACK) {
+        undoMoveToBeginStack(move);
     }
 }
 
@@ -93,4 +103,37 @@ function undoClickStack() {
         stackCardsRevealed--;
     });
     STACK[stackCardsRevealed - 1].hide(false);
+
+    let previousCard = STACK[stackCardsRevealed - 2];
+    if(previousCard) {
+        previousCard.setActive(true);
+    }
+}
+
+function undoMoveToRows(move) {
+}
+
+function undoMoveToBeginStack(move) {
+    let card = move.target.pop();
+
+    if(move.sourceType == MOVE_FROM_STACK) {
+        STACK = STACK.concat(card, STACK.splice(stackCardsRevealed));
+        stackCardsRevealed++;
+        card.moveTo(STACK_X2, STACK_Y, CARD_SPEED_ROW);
+    }
+    if(move.sourceType == MOVE_FROM_ROWS) {
+        let index = move.source;
+        let length = rows[index].length;
+        let cardPos = getRowCardPos(index, length);
+        
+        rows[index].push(card);
+        card.moveTo(cardPos.x, cardPos.y, CARD_SPEED_ROW);
+        if(length != 0) {
+            rows[index][length - 1].hide(true);
+        }
+    }
+    if(move.sourceType == MOVE_FROM_BEGIN_STACK) {
+        beginStacks[move.source].push(card);
+        card.moveTo(getBeginShelfPos(move.source).x, getBeginShelfPos(move.source).y, CARD_SPEED_ROW);
+    }
 }
