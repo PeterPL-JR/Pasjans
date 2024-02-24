@@ -179,18 +179,6 @@ function render() {
     if (movedCard != null) {
         movedCard.render();
     }
-
-    // Render stack cards amount
-    const unrevealedCards = STACK.length - stackCardsRevealed;
-    if(unrevealedCards > 0) {
-        const STACK_STR_OFFSET = Card.BORDER_RADIUS + 7;
-        const STACK_STR_X = STACK_X1 + STACK_STR_OFFSET;
-        const STACK_STR_Y = STACK_Y + Card.HEIGHT - STACK_STR_OFFSET;
-
-        ctx.font = "bold 30px 'Verdana'";
-        ctx.fillStyle = "white";
-        ctx.fillText(unrevealedCards, STACK_STR_X, STACK_STR_Y);
-    }
 }
 
 function renderStack() {
@@ -202,6 +190,7 @@ function renderStack() {
     for (let i = 0; i < stackCardsRevealed; i++) {
         tryRenderCard(STACK[i]);
     }
+    renderStackCardsNumber();
 }
 function renderRows() {
     for (let i = 0; i < rows.length; i++) {
@@ -219,6 +208,19 @@ function renderBeginStacks() {
         for (let j = 0; j < beginStacks[i].length; j++) {
             beginStacks[i][j].render();
         }
+    }
+}
+
+function renderStackCardsNumber() {
+    const unrevealedCards = STACK.length - stackCardsRevealed;
+    if(unrevealedCards > 0) {
+        const STACK_STR_OFFSET = Card.BORDER_RADIUS + 7;
+        const STACK_STR_X = STACK_X1 + STACK_STR_OFFSET;
+        const STACK_STR_Y = STACK_Y + Card.HEIGHT - STACK_STR_OFFSET;
+
+        ctx.font = "bold 30px 'Verdana'";
+        ctx.fillStyle = "white";
+        ctx.fillText(unrevealedCards, STACK_STR_X, STACK_STR_Y);
     }
 }
 
@@ -247,15 +249,16 @@ function moveCardArray(card, target, newPosition, targetType) {
     card.setPosition(newPosition.x, newPosition.y);
     addCardToArray(card, target);
 }
-function moveCardArrayToRow(card, target, newPosition) {
-    moveCardArray(card, target, newPosition, MOVE_TO_ROWS);
+function moveCardArrayToRow(card, rowIndex, newPosition, cardIndex) {
+    moveCardArray(card, rows[rowIndex], newPosition, MOVE_TO_ROWS);
     if(card.cardNext) {
-        moveCardArrayToRow(card.cardNext, target, newPosition);
+        moveCardArrayToRow(card.cardNext, rowIndex, newPosition, cardIndex + 1);
         return;
     }
     card.resetCardNext();
-    
     setRowsCardsPositions();
+
+    doMove(MOVE_TO_ROWS, {target: rowIndex, cardsNumber: cardIndex});
 }
 
 function addCardToArray(card, array) {

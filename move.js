@@ -7,18 +7,17 @@ function tryMoveToRows(card) {
         let targetPosition = lastCard ? {x: lastCard.x, y: lastCard.y} : getRowPos(i);
 
         if(isIntersectionEnough(card, targetPosition)) {
-            let target = rows[i];
             let positionTarget = getRowCardPos(i, rows[i].length);
 
             if(lastCard) {
                 if(lastCard.number == card.number + 1 && lastCard.colorIndex != card.colorIndex) {
-                    moveCardArrayToRow(card, target, positionTarget);
+                    moveCardArrayToRow(card, i, positionTarget, 1);
                     lastCard.setActive(false);
                     return true;
                 }
             } else {
                 if(card.number == _KING) {
-                    moveCardArrayToRow(card, target, positionTarget);
+                    moveCardArrayToRow(card, i, positionTarget, 1);
                     return true;
                 }
             }
@@ -55,8 +54,6 @@ function tryMoveFromStack(card, target, targetType) {
     let indexInSource = STACK.indexOf(card);
 
     if (indexInSource != -1) {
-        if(targetType == MOVE_TO_ROWS) var points = MOVE_TO_ROWS_POINTS;
-        if(targetType == MOVE_TO_BEGIN_STACK) var points = MOVE_TO_BEGIN_STACK_POINTS;
         STACK.splice(indexInSource, 1);
 
         stackCardsRevealed--;
@@ -67,7 +64,7 @@ function tryMoveFromStack(card, target, targetType) {
         if(lastCard) {
             lastCard.setActive(true);
         }
-        doMove(targetType, points, {target, sourceType: MOVE_FROM_STACK});
+        doMove(targetType, {target, sourceType: MOVE_FROM_STACK});
     }
 }
 function tryMoveFromRows(card, target, targetType) {
@@ -75,7 +72,6 @@ function tryMoveFromRows(card, target, targetType) {
         let row = rows[i];
         let indexInSource = row.indexOf(card);
         if (indexInSource != -1) {
-            if(targetType == MOVE_TO_BEGIN_STACK) var points = MOVE_TO_BEGIN_STACK_POINTS;
             row.splice(indexInSource, 1);
             
             const lastCard = row[row.length - 1];
@@ -87,7 +83,9 @@ function tryMoveFromRows(card, target, targetType) {
                     lastCard.setActive(true);
                 }
             }
-            doMove(targetType, points, {target, sourceType: MOVE_FROM_ROWS, source: i});
+            if(targetType != MOVE_TO_ROWS) {
+                doMove(targetType, {target, sourceType: MOVE_FROM_ROWS, source: i});
+            }
         }
     }
 }
@@ -96,14 +94,15 @@ function tryMoveFromBeginStack(card, target, targetType) {
         let bStack = beginStacks[i];
         let indexInSource = bStack.indexOf(card);
         if (indexInSource != -1) {
-            if(targetType == MOVE_TO_ROWS) var points = MOVE_AGAIN_TO_ROWS_POINTS;
             bStack.splice(indexInSource, 1);
             
             const lastCard = bStack[indexInSource - 1];
             if(lastCard) {
                 lastCard.setActive(true);
             }
-            doMove(targetType, points, {target, sourceType: MOVE_FROM_BEGIN_STACK, source: i});
+            if(targetType != MOVE_TO_ROWS) {
+                doMove(targetType, {target, sourceType: MOVE_FROM_BEGIN_STACK, source: i});
+            }
         }
     }
 }
