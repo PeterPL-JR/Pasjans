@@ -104,18 +104,55 @@ function undoClickStack() {
 }
 
 function undoMoveCard(move) {
-    let target = move.targetType != MOVE_TO_ROWS ? move.target : rows[move.target];
-    let card = target.pop();
+    let cardsNumber = move.cardsNumber ? move.cardsNumber : 1;
+
+    let cards = [];
+    for(let i = 0; i < cardsNumber; i++) {
+        cards.unshift(move.target.pop());
+    }
 
     if(move.sourceType == MOVE_FROM_STACK) {
-        STACK = STACK.concat(card, STACK.splice(stackCardsRevealed));
-        stackCardsRevealed++;
-        card.moveTo(STACK_X2, STACK_Y, CARD_SPEED_ROW);
+        undoMoveFromStack(cards[0]);
     }
     if(move.sourceType == MOVE_FROM_ROWS) {
+        undoMoveFromRows(move, cards);
     }
     if(move.sourceType == MOVE_FROM_BEGIN_STACK) {
-        beginStacks[move.source].push(card);
-        card.moveTo(getBeginShelfPos(move.source).x, getBeginShelfPos(move.source).y, CARD_SPEED_ROW);
+        undoMoveFromBeginStack(move, cards[0]);
     }
+}
+
+function undoMoveFromStack(card) {
+    STACK = STACK.concat(card, STACK.splice(stackCardsRevealed));
+    stackCardsRevealed++;
+    card.moveTo(STACK_X2, STACK_Y, CARD_SPEED_ROW);
+}
+
+function undoMoveFromRows(move, cards) {
+    if(move.source.length > 0 && !move.lastCardRevealed) {
+        move.source[move.source.length - 1].hide(true);
+    }
+    
+    if(move.targetType == MOVE_TO_BEGIN_STACK) {
+        let card = cards[0];
+        let cardPos = getRowCardPos(rows.indexOf(move.source), move.source.length);
+        move.source.push(card);
+        card.moveTo(cardPos.x, cardPos.y, CARD_SPEED_ROW);
+    }
+    if(move.targetType == MOVE_TO_ROWS) {
+        for(let card of cards) {
+            move.source.push(card);
+        }
+        for(let i = 0; i < cards.length; i++) {
+            let card = cards[i];
+            let cardPos = getRowCardPos(rows.indexOf(move.source), move.source.length - cards.length + i);
+            card.moveTo(cardPos.x, cardPos.y, CARD_SPEED_ROW);
+        }
+    }
+}
+
+function undoMoveFromBeginStack(move, card) {
+    let beginStackIndex = beginStacks.indexOf(move.source);
+    move.source.push(card);
+    card.moveTo(getBeginShelfPos(beginStackIndex).x, getBeginShelfPos(beginStackIndex).y, CARD_SPEED_ROW);
 }

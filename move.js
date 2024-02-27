@@ -1,23 +1,24 @@
 // Check move to
 function tryMoveToRows(card) {
     for(let i = 0; i < rows.length; i++) {
-        let lastCard = rows[i][rows[i].length - 1];
+        let row = rows[i];
+        let lastCard = row[row.length - 1];
         if(card == lastCard) continue;
 
         let targetPosition = lastCard ? {x: lastCard.x, y: lastCard.y} : getRowPos(i);
 
         if(isIntersectionEnough(card, targetPosition)) {
-            let positionTarget = getRowCardPos(i, rows[i].length);
+            let positionTarget = getRowCardPos(i, row.length);
 
             if(lastCard) {
                 if(lastCard.number == card.number + 1 && lastCard.colorIndex != card.colorIndex) {
-                    moveCardArrayToRow(card, i, positionTarget, 1);
+                    moveCardArrayToRow(card, row, positionTarget, 1);
                     lastCard.setActive(false);
                     return true;
                 }
             } else {
                 if(card.number == _KING) {
-                    moveCardArrayToRow(card, i, positionTarget, 1);
+                    moveCardArrayToRow(card, row, positionTarget, 1);
                     return true;
                 }
             }
@@ -64,7 +65,9 @@ function tryMoveFromStack(card, target, targetType) {
         if(lastCard) {
             lastCard.setActive(true);
         }
-        doMove(targetType, {target, sourceType: MOVE_FROM_STACK});
+        if(targetType != MOVE_TO_ROWS) {
+            doMove(targetType, {target, sourceType: MOVE_FROM_STACK});
+        }
     }
 }
 function tryMoveFromRows(card, target, targetType) {
@@ -76,15 +79,17 @@ function tryMoveFromRows(card, target, targetType) {
             
             const lastCard = row[row.length - 1];
             if (lastCard) {
+                var lastCardRevealed = lastCard ? lastCard.revealed : false;
+
                 if(!lastCard.revealed) {
-                    revealCard(lastCard, true);
+                    revealNewCard(lastCard, true);
                     updateScore(REVEAL_CARD_POINTS);
                 } else {
                     lastCard.setActive(true);
                 }
             }
             if(targetType != MOVE_TO_ROWS) {
-                doMove(targetType, {target, sourceType: MOVE_FROM_ROWS, source: i});
+                doMove(targetType, {target, sourceType: MOVE_FROM_ROWS, source: row, lastCardRevealed});
             }
         }
     }
@@ -101,7 +106,7 @@ function tryMoveFromBeginStack(card, target, targetType) {
                 lastCard.setActive(true);
             }
             if(targetType != MOVE_TO_ROWS) {
-                doMove(targetType, {target, sourceType: MOVE_FROM_BEGIN_STACK, source: i});
+                doMove(targetType, {target, sourceType: MOVE_FROM_BEGIN_STACK, source: bStack});
             }
         }
     }

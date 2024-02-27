@@ -249,16 +249,22 @@ function moveCardArray(card, target, newPosition, targetType) {
     card.setPosition(newPosition.x, newPosition.y);
     addCardToArray(card, target);
 }
-function moveCardArrayToRow(card, rowIndex, newPosition, cardIndex) {
-    moveCardArray(card, rows[rowIndex], newPosition, MOVE_TO_ROWS);
+function moveCardArrayToRow(card, target, newPosition, cardIndex) {
+    let source = getCardContainer(card);
+    let sourceType = getCardContainerType(card);
+    
+    let cardOrderIndex = source.indexOf(card);
+    let lastCardRevealed = cardOrderIndex > 0 ? source[cardOrderIndex - 1].revealed : false;
+
+    moveCardArray(card, target, newPosition, MOVE_TO_ROWS);
     if(card.cardNext) {
-        moveCardArrayToRow(card.cardNext, rowIndex, newPosition, cardIndex + 1);
+        moveCardArrayToRow(card.cardNext, target, newPosition, cardIndex + 1);
         return;
     }
     card.resetCardNext();
     setRowsCardsPositions();
 
-    doMove(MOVE_TO_ROWS, {target: rowIndex, cardsNumber: cardIndex});
+    doMove(MOVE_TO_ROWS, {target, source, sourceType, cardsNumber: cardIndex, lastCardRevealed});
 }
 
 function addCardToArray(card, array) {
@@ -357,7 +363,35 @@ function isCardMoveable(card) {
     return card.revealed && !card.moving && cardContain(beginMousePos.x, beginMousePos.y, card);
 }
 
-function revealCard(card, animation) {
+function getCardContainer(card) {
+    for(let c of STACK) {
+        if(c == card) return STACK;
+    }
+    for(let bStack of beginStacks) {
+        for(let c of bStack) {
+            if(c == card) return bStack;
+        }
+    }
+    for(let row of rows) {
+        for(let c of row) {
+            if(c == card) return row;
+        }
+    }
+}
+function getCardContainerType(card) {
+    let container = getCardContainer(card);
+    if(container == STACK) {
+        return MOVE_FROM_STACK;
+    }
+    if(beginStacks.indexOf(container) != -1) {
+        return MOVE_FROM_BEGIN_STACK;
+    }
+    if(rows.indexOf(container) != -1) {
+        return MOVE_FROM_ROWS;
+    }
+}
+
+function revealNewCard(card, animation) {
     card.reveal(animation);
 }
 
@@ -381,7 +415,7 @@ function resetStack() {
         card.setPosition(STACK_X1, STACK_Y);
     }
     updateScore(RESET_STACK_POINTS);
-    movesArray.push({type: MOVE_CLICK_STACK});
+    movesArray.push({targetType: MOVE_CLICK_STACK});
 }
 
 function revealStackCard(cardIndex, moveEndEvent = null) {
