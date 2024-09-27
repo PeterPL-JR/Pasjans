@@ -53,6 +53,22 @@ function doMove(targetType, data = {}) {
 
     moves++;
     setMenuValue(movesMenu, moves);
+
+    if(isAllCardsRevealed()) {
+        stopTime();
+    }
+}
+
+function isAllCardsRevealed() {
+    for(let card of ALL_CARDS) {
+        if(STACK.indexOf(card) != -1) {
+            continue;
+        }
+        if(!card.revealed) {
+            return false;
+        }
+    }
+    return true;
 }
 
 const MOVE_TO_ROWS_POINTS = 5;
@@ -123,6 +139,7 @@ function undoMoveCard(move) {
 }
 
 function undoMoveFromStack(card) {
+    STACK[stackCardsRevealed].setActive(false);
     STACK = STACK.concat(card, STACK.splice(stackCardsRevealed));
     stackCardsRevealed++;
     card.moveTo(STACK_X2, STACK_Y, CARD_SPEED_ROW);

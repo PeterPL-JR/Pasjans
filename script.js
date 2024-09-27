@@ -235,6 +235,17 @@ function mouseClick(x, y) {
             return;
         }
         clickStack();
+    } else {
+        let card;
+        if(card = findBeginStackClickedCard(x, y)) {
+            console.log("BEGIN STACK:", card);
+        } else if(card = findRowClickedCard(x, y)) {
+            console.log("ROW:", card);
+        } else if(card = findStackClickedCard(x, y)) {
+            clickMoveFromStack(card);
+        } else {
+            console.log(card);
+        }
     }
 }
 function moveCard() {
@@ -265,6 +276,22 @@ function moveCardArrayToRow(card, target, newPosition, cardIndex) {
     setRowsCardsPositions();
 
     doMove(MOVE_TO_ROWS, {target, source, sourceType, cardsNumber: cardIndex, lastCardRevealed});
+}
+
+function findBeginStackClickedCard(x, y) {
+    
+}
+
+function findStackClickedCard(x, y) {
+    if(contain(x, y, STACK_X2, STACK_Y, Card.WIDTH, Card.HEIGHT)) {
+        if(stackCardsRevealed > 0) {
+            return STACK[stackCardsRevealed - 1];
+        }
+    }
+}
+
+function findRowClickedCard(x, y) {
+    
 }
 
 function addCardToArray(card, array) {

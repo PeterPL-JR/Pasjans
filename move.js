@@ -111,3 +111,80 @@ function tryMoveFromBeginStack(card, target, targetType) {
         }
     }
 }
+
+function clickMoveCardToBeginStack(card, beginStackIndex) {
+    if(beginStacks[beginStackIndex].indexOf(card) != -1) {
+        return;
+    }
+    movedCard = card;
+    card.setActive(false);
+    let pos = getBeginShelfPos(beginStackIndex);
+    card.moveTo(pos.x, pos.y, CARD_SPEED_ROW, function() {
+        movedCard = null;
+        card.setActive(true);
+    });
+    beginStacks[beginStackIndex].push(card);
+}
+
+function clickMoveCardToRow(card, rowIndex) {
+    if(rows[rowIndex].indexOf(card) != -1) {
+        return;
+    }
+    movedCard = card;
+    card.setActive(false);
+    let pos = getRowCardPos(rowIndex, rows[rowIndex].length);
+    card.moveTo(pos.x, pos.y, CARD_SPEED_ROW, function() {
+        movedCard = null;
+        card.setActive(true);
+    });
+    rows[rowIndex].push(card);
+}
+
+function clickMoveFromStack(card) {
+    // Check begin stacks
+    let beginStackIndex = -1;
+    if(card.number == 0) {
+        if(beginStacks[card.colorType].length == 0) {
+            beginStackIndex = card.colorType;
+        } else {
+            for(let i = 0; i < beginStacks.length; i++) {
+                if(beginStacks[i].length == 0) {
+                    beginStackIndex = i;
+                    break;
+                }
+            }
+        }
+    } else {
+        for(let i = 0; i < beginStacks.length; i++) {
+            if(beginStacks[i].length > 0) {
+                let lastCard = beginStacks[i][beginStacks[i].length - 1];
+                if(card.colorType == lastCard.colorType && card.number == lastCard.number + 1) {
+                    beginStackIndex = i;
+                    lastCard.setActive(false);
+                    break;
+                }
+            }
+        }
+    }
+    if(beginStackIndex != -1) {
+        movedCard = card;
+        clickMoveCardToBeginStack(card, beginStackIndex);
+        STACK.splice(STACK.indexOf(card), 1);
+        stackCardsRevealed--;
+        return;
+    }
+
+    // Check rows
+    for(let i = 0; i < rows.length; i++) {
+        if(rows[i].length > 0) {
+            let lastCard = rows[i][rows[i].length - 1];
+            if(card.colorIndex != lastCard.colorIndex && card.number == lastCard.number - 1) {
+                movedCard = card;
+                clickMoveCardToRow(card, i);
+                STACK.splice(STACK.indexOf(card), 1);
+                stackCardsRevealed--;
+                return;
+            }
+        }
+    }
+}
