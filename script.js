@@ -59,35 +59,54 @@ function init() {
     CARDS_IMAGES[TYPE_CARO] = loadImage(IMAGES_CARDS_PATH + "karo.png");
     CARDS_IMAGES[TYPE_TREFLE] = loadImage(IMAGES_CARDS_PATH + "trefle.png");
 
+    const LEFT_MOUSE_BUTTON = 0;
+    const RIGHT_MOUSE_BUTTON = 2;
+
     canvas.onclick = function (event) {
-        const LEFT_MOUSE_BUTTON = 0;
+        const x = getMousePos(event).x;
+        const y = getMousePos(event).y;
+
         if (event.button == LEFT_MOUSE_BUTTON) {
-            const x = getMousePos(event).x;
-            const y = getMousePos(event).y;
             mouseClick(x, y);
         }
     }
     canvas.onmousedown = function (event) {
-        if(!started) {
-            initMenu();
+        const x = getMousePos(event).x;
+        const y = getMousePos(event).y;
+
+        if(event.button == LEFT_MOUSE_BUTTON) {
+            if(!started) {
+                initMenu();
+            }
+            mouseClicked = true;
+            beginMousePos = getMousePos(event);
+            mouseStartMoving();
         }
-        mouseClicked = true;
-        beginMousePos = getMousePos(event);
-        mouseStartMoving();
+        if(event.button == RIGHT_MOUSE_BUTTON) {
+            mouseMoveClick(x, y);
+        }
     }
-    canvas.onmouseup = function () {
-        mouseStopMoving();
+    canvas.onmouseup = function (event) {
+        if(event.button == LEFT_MOUSE_BUTTON) {
+            mouseStopMoving();
+        }
     }
 
     canvas.onmousemove = function (event) {
-        mouseX = getMousePos(event).x;
-        mouseY = getMousePos(event).y;
-        mouseMoving = true;
-        updateMouseMoving(event);
+        if(event.button == LEFT_MOUSE_BUTTON) {
+            mouseX = getMousePos(event).x;
+            mouseY = getMousePos(event).y;
+            mouseMoving = true;
+            updateMouseMoving(event);
+        }
     }
-    canvas.onmouseout = function () {
-        mouseStopMoving();
+    canvas.onmouseout = function (event) {
+        if(event.button == LEFT_MOUSE_BUTTON) {
+            mouseStopMoving();
+        }
     }
+
+    canvas.oncontextmenu = () => false;
 
     initGame();
     update();
@@ -235,17 +254,18 @@ function mouseClick(x, y) {
             return;
         }
         clickStack();
+    }
+}
+function mouseMoveClick(x, y) {
+    let card;
+    if(card = findBeginStackClickedCard(x, y)) {
+        clickMoveFromBeginStack(card);
+    } else if(card = findRowClickedCard(x, y)) {
+        clickMoveFromRow(card);
+    } else if(card = findStackClickedCard(x, y)) {
+        clickMoveFromStack(card);
     } else {
-        let card;
-        if(card = findBeginStackClickedCard(x, y)) {
-            console.log("BEGIN STACK:", card);
-        } else if(card = findRowClickedCard(x, y)) {
-            console.log("ROW:", card);
-        } else if(card = findStackClickedCard(x, y)) {
-            clickMoveFromStack(card);
-        } else {
-            console.log(card);
-        }
+        console.log(card);
     }
 }
 function moveCard() {
@@ -279,19 +299,33 @@ function moveCardArrayToRow(card, target, newPosition, cardIndex) {
 }
 
 function findBeginStackClickedCard(x, y) {
-    
+    for(let i = 0; i < beginStacks.length; i++) {
+        if(beginStacks[i].length > 0) {
+            let pos = getBeginShelfPos(i);
+            if(contain(x, y, pos.x, pos.y, Card.WIDTH, Card.HEIGHT)) {
+                return beginStacks[i][beginStacks[i].length - 1];
+            }
+        }
+    }
 }
 
 function findStackClickedCard(x, y) {
-    if(contain(x, y, STACK_X2, STACK_Y, Card.WIDTH, Card.HEIGHT)) {
-        if(stackCardsRevealed > 0) {
+    if(stackCardsRevealed > 0) {
+        if(contain(x, y, STACK_X2, STACK_Y, Card.WIDTH, Card.HEIGHT)) {
             return STACK[stackCardsRevealed - 1];
         }
     }
 }
 
 function findRowClickedCard(x, y) {
-    
+    for(let i = 0; i < rows.length; i++) {
+        if(rows[i].length > 0) {
+            let pos = getRowCardPos(i, rows[i].length - 1);
+            if(contain(x, y, pos.x, pos.y, Card.WIDTH, Card.HEIGHT)) {
+                return rows[i][rows[i].length - 1];
+            }
+        }
+    }
 }
 
 function addCardToArray(card, array) {

@@ -115,6 +115,17 @@ function getRowCardY(cardIndex) {
     return cardIndex * (Card.SUB_IMAGE_SIZE + Card.SUB_IMAGE_CORRECT * 2);
 }
 
+function first(array) {
+    return array[0];
+}
+function last(array) {
+    return array[array.length - 1];
+}
+
+function isEmpty(array) {
+    return array.length == 0;
+}
+
 function setCanvasCursor(cursorType) {
     canvas.style.setProperty("cursor", cursorType);
 }
